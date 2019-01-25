@@ -1,0 +1,6 @@
+<RCC>
+  <qresource>
+    <file>labplot-transform-move.svg</file>
+    <file>labplot-auto-scale-all.svg</file>
+  </qresource>
+</RCC>
