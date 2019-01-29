@@ -19,6 +19,6 @@ class Driver(QWidget) :
     self.ui.positive.clicked.connect(self.goPos)
     @pyqtSlot()
     def onEditingFinished() :
-      self.emit.goToP(self.ui.position.value)
+      self.goToP.emit(self.ui.position.value())
     self.ui.position.editingFinished.connect(onEditingFinished)
     

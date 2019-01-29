@@ -9,7 +9,7 @@ import epics
 
 execPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 sys.path.append(execPath + "../share/imblSlits")
-#import imblSlits
+from slits import Slits
 
 
 class BLmode(QObject):
@@ -69,10 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
       #tab.setTabIcon(itab, None)
       tab.setTabButton(itab,  QtWidgets.QTabBar.LeftSide, lab )
     w = self.ui.tabWidget.tabBar().width()
-    tab = self.ui.tabWidget.setIconSize(QtCore.QSize(w,w))
-    
-
-    
+    tab = self.ui.tabWidget.setIconSize(QtCore.QSize(w,w))    
     
     self.ui.statusbar.addPermanentWidget(QtWidgets.QLabel('Shutter mode: ', self));
     modeLabel = QtWidgets.QLabel('Init', self)
@@ -99,6 +96,34 @@ class MainWindow(QtWidgets.QMainWindow):
     distances.addAction('Enclosure 2B', distancePicked)
     distances.addAction('Enclosure 3B', distancePicked)
     self.ui.distances.setMenu(distances)
+    
+    self.ui.pandaBear.setMotors( {Slits.MotoRole.VP : 'SR08ID01SLW01:VPOS',
+                                  Slits.MotoRole.VS : 'SR08ID01SLW01:VOPEN',
+                                  Slits.MotoRole.LF : 'SR08ID01SLW01:LEFT',
+                                  Slits.MotoRole.RT : 'SR08ID01SLW01:RIGHT'} )
+
+    self.ui.babyBear.setMotors(  {Slits.MotoRole.VP : 'SR08ID01SLM12:VCENTRE',
+                                  Slits.MotoRole.VS : 'SR08ID01SLM12:VSIZE',
+                                  Slits.MotoRole.HP : 'SR08ID01SLM12:HCENTRE',
+                                  Slits.MotoRole.HS : 'SR08ID01SLM12:HSIZE',
+                                  Slits.MotoRole.LF : 'SR08ID01SLM12:IN',
+                                  Slits.MotoRole.RT : 'SR08ID01SLM12:OUT',
+                                  Slits.MotoRole.BT : 'SR08ID01SLM12:BOT',
+                                  Slits.MotoRole.TP : 'SR08ID01SLM12:TOP'} )
+    
+    self.ui.mamaBear.setMotors(  {Slits.MotoRole.VP : 'SR08ID01SLM21:Z',
+                                  Slits.MotoRole.VS : 'SR08ID01SLM21:ZGAP',
+                                  Slits.MotoRole.HP : 'SR08ID01SLM21:Y',
+                                  Slits.MotoRole.HS : 'SR08ID01SLM21:YGAP'} )
+    
+    self.ui.papaBear.setMotors(  {Slits.MotoRole.VP : 'SR08ID01SLM03:ZCENTRE',
+                                  Slits.MotoRole.VS : 'SR08ID01SLM03:ZGAP',
+                                  Slits.MotoRole.HP : 'SR08ID01SLM03:YCENTRE',
+                                  Slits.MotoRole.HS : 'SR08ID01SLM03:YGAP'} )
+
+    
+    
+
   
 
   
