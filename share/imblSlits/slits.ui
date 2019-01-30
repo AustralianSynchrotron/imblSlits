@@ -6,109 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>332</width>
-    <height>603</height>
+    <width>398</width>
+    <height>590</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="9" column="0" colspan="3">
-    <widget class="Line" name="lineBot">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="1">
-    <widget class="Driver" name="Top" native="true"/>
-   </item>
    <item row="7" column="0">
-    <widget class="Driver" name="Left" native="true"/>
-   </item>
-   <item row="5" column="0" colspan="3">
-    <widget class="QLabel" name="label_16">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Edges</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="Driver" name="HPos" native="true"/>
-   </item>
-   <item row="0" column="0" colspan="3">
-    <widget class="QLabel" name="label_19">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Window</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="2">
-    <widget class="QLabel" name="label_18">
-     <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap>labplot-auto-scale-all.svg</pixmap>
-     </property>
-     <property name="scaledContents">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="12" column="0" colspan="3">
-    <widget class="QMotorStack" name="stack" native="true"/>
-   </item>
-   <item row="8" column="1">
-    <widget class="Driver" name="Bottom" native="true"/>
-   </item>
-   <item row="3" column="1">
-    <widget class="Driver" name="VSize" native="true"/>
-   </item>
-   <item row="4" column="0" colspan="3">
-    <widget class="Line" name="line_8">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="Driver" name="VPos" native="true"/>
-   </item>
-   <item row="7" column="1">
-    <widget class="QPushButton" name="stop">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Stop</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="2">
-    <widget class="Driver" name="Right" native="true"/>
+    <widget class="Driver" name="dLF" native="true"/>
    </item>
    <item row="2" column="1">
     <widget class="QWidget" name="stepWidget" native="true">
@@ -118,13 +25,6 @@
       </property>
       <item row="1" column="0" colspan="2">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item>
-         <widget class="QLabel" name="label_17">
-          <property name="text">
-           <string>Step</string>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QMDoubleSpinBox" name="step">
           <property name="decimals">
@@ -189,10 +89,71 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Step</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
-   <item row="10" column="0" colspan="3">
+   <item row="13" column="0" colspan="3">
+    <widget class="QMotorStack" name="stack" native="true"/>
+   </item>
+   <item row="2" column="0">
+    <widget class="Driver" name="dHS" native="true"/>
+   </item>
+   <item row="5" column="0" colspan="3">
+    <widget class="QLabel" name="label_16">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Edges</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="Driver" name="dHP" native="true"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="face"/>
+   </item>
+   <item row="3" column="1">
+    <widget class="Driver" name="dVS" native="true"/>
+   </item>
+   <item row="4" column="0" colspan="3">
+    <widget class="Line" name="line_8">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="3">
+    <widget class="QLabel" name="label_19">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Window</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="0" colspan="3">
     <widget class="QPushButton" name="showStack">
      <property name="text">
       <string>Raw motor access</string>
@@ -202,27 +163,57 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="2">
-    <widget class="Driver" name="HSize" native="true"/>
+   <item row="6" column="1">
+    <widget class="Driver" name="dTP" native="true"/>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_20">
+   <item row="7" column="2">
+    <widget class="Driver" name="dRT" native="true"/>
+   </item>
+   <item row="7" column="1">
+    <widget class="QPushButton" name="stop">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
-      <string/>
-     </property>
-     <property name="pixmap">
-      <pixmap>labplot-transform-move.svg</pixmap>
-     </property>
-     <property name="scaledContents">
-      <bool>true</bool>
+      <string>Stop</string>
      </property>
     </widget>
    </item>
-   <item row="11" column="1">
+   <item row="10" column="0" colspan="3">
+    <widget class="Line" name="lineBot">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="Driver" name="dBT" native="true"/>
+   </item>
+   <item row="1" column="1">
+    <widget class="Driver" name="dVP" native="true"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="sizeLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QLabel" name="positionLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
     <widget class="QWidget" name="spacer" native="true">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <spacer name="spacerO">
+       <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>

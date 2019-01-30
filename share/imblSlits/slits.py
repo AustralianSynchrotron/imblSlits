@@ -7,7 +7,7 @@ from enum import Enum, auto
 
 from qcamotorgui import QCaMotorGUI
 
-execPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
+filePath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 
 from driver import Driver
 
@@ -30,26 +30,40 @@ class Slits(QWidget) :
 
   def __init__(self, parent):
     super(QWidget, self).__init__(parent)
-    self.ui = loadUi(execPath + 'slits.ui', self)
+    self.ui = loadUi(filePath + 'slits.ui', self)
     # ↔↕⇔⇕
-    self.ui.HPos.label.setText('↔ position')
-    self.ui.VPos.label.setText('↕ position')
-    self.ui.HSize.label.setText('↔ size')
-    self.ui.VSize.label.setText('↕ size')
-    self.ui.Left.label.setText('left')
-    self.ui.Right.label.setText('right')
-    self.ui.Top.label.setText('top')
-    self.ui.Bottom.label.setText('bottom')
+    self.ui.dHP.label.setText('↔ position')
+    self.ui.dVP.label.setText('↕ position')
+    self.ui.dHS.label.setText('↔ size')
+    self.ui.dVS.label.setText('↕ size')
+    self.ui.dLF.label.setText('left')
+    self.ui.dRT.label.setText('right')
+    self.ui.dTP.label.setText('top')
+    self.ui.dBT.label.setText('bottom')
 
     minDriverWidth = self.ui.stepWidget.sizeHint().width()
     for drv in self.ui.findChildren(Driver):
       drv.setMinimumWidth(minDriverWidth)
+    minSide = min(minDriverWidth, self.ui.dVP.sizeHint().height())
+    self.ui.face.setMinimumSize(minSide, minSide)
+
+
+    self.ui.sizeLabel.setStyleSheet('image: url(' + filePath + 'labplot-auto-scale-all.svg);')
+    self.ui.positionLabel.setStyleSheet('image: url(' + filePath + 'labplot-transform-move.svg);')
 
     self.isMoving = False
     self.isConnected = False
     self.isOnLimit = False
     self.geometry = QRectF()
     self.motors = {}
+    self.dirvers = { self.MotoRole.HP : self.ui.dHP,
+                     self.MotoRole.HS : self.ui.dHS,
+                     self.MotoRole.VP : self.ui.dVP,
+                     self.MotoRole.VS : self.ui.dVS,
+                     self.MotoRole.LF : self.ui.dLF,
+                     self.MotoRole.RT : self.ui.dRT,
+                     self.MotoRole.TP : self.ui.dTP,
+                     self.MotoRole.BT : self.ui.dBT }
 
     self.ui.stack.lock(True)
     self.ui.stack.hide()
