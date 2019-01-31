@@ -10,7 +10,7 @@ import epics
 binPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 sharePath = binPath + "../share/imblSlits"
 sys.path.append(sharePath)
-from slits import Slits
+from slits import Slits, MotoRole
 
 
 class SHmode(QObject):
@@ -128,15 +128,15 @@ class MainWindow(QtWidgets.QMainWindow):
     def uiModeSwap():
       if self.ui.mashaFam.layout().count() :
         self.ui.famWidget.hide()
-        for slt in tabLay.keys() :
-          tabLay[slt].addWidget(slt)
+        for slt, tal in tabLay.items() :
+          tal.addWidget(slt)
           slt.findChild(Slits).face.hide()
         self.ui.tabWidget.show()
         self.sender().setText('In tabs')
       else :
         self.ui.tabWidget.hide()
-        for slt in famLay.keys() :
-          famLay[slt].addWidget(slt)
+        for slt, fal in famLay.items() :
+          fal.addWidget(slt)
           slt.findChild(Slits).face.show()
         self.ui.famWidget.show()
         self.sender().setText('All')
@@ -186,30 +186,36 @@ class MainWindow(QtWidgets.QMainWindow):
     distances.addAction('Enclosure 3B', distancePicked)
     self.ui.distances.setMenu(distances)
 
-    self.ui.pandaBear.setMotors( {Slits.MotoRole.VP : 'SR08ID01SLW01:VPOS',
-                                  Slits.MotoRole.VS : 'SR08ID01SLW01:VOPEN',
-                                  Slits.MotoRole.LF : 'SR08ID01SLW01:LEFT',
-                                  Slits.MotoRole.RT : 'SR08ID01SLW01:RIGHT'} )
+    self.ui.pandaBear.setMotors( {MotoRole.VP : 'SR08ID01SLW01:VPOS',
+                                  MotoRole.VS : 'SR08ID01SLW01:VOPEN',
+                                  MotoRole.LF : 'SR08ID01SLW01:LEFT',
+                                  MotoRole.RT : 'SR08ID01SLW01:RIGHT'},
+                                 {MotoRole.LF : 1} )
 
-    self.ui.babyBear.setMotors(  {Slits.MotoRole.VP : 'SR08ID01SLM12:VCENTRE',
-                                  Slits.MotoRole.VS : 'SR08ID01SLM12:VSIZE',
-                                  Slits.MotoRole.HP : 'SR08ID01SLM12:HCENTRE',
-                                  Slits.MotoRole.HS : 'SR08ID01SLM12:HSIZE',
-                                  Slits.MotoRole.LF : 'SR08ID01SLM12:IN',
-                                  Slits.MotoRole.RT : 'SR08ID01SLM12:OUT',
-                                  Slits.MotoRole.BT : 'SR08ID01SLM12:BOT',
-                                  Slits.MotoRole.TP : 'SR08ID01SLM12:TOP'} )
+    self.ui.babyBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM12:VCENTRE',
+                                  MotoRole.VS : 'SR08ID01SLM12:VSIZE',
+                                  MotoRole.HP : 'SR08ID01SLM12:HCENTRE',
+                                  MotoRole.HS : 'SR08ID01SLM12:HSIZE'} )
+                                  #MotoRole.LF : 'SR08ID01SLM12:IN',
+                                  #MotoRole.RT : 'SR08ID01SLM12:OUT',
+                                  #MotoRole.BT : 'SR08ID01SLM12:BOT',
+                                  #MotoRole.TP : 'SR08ID01SLM12:TOP'} )
 
-    self.ui.mamaBear.setMotors(  {Slits.MotoRole.VP : 'SR08ID01SLM21:Z',
-                                  Slits.MotoRole.VS : 'SR08ID01SLM21:ZGAP',
-                                  Slits.MotoRole.HP : 'SR08ID01SLM21:Y',
-                                  Slits.MotoRole.HS : 'SR08ID01SLM21:YGAP'} )
+    self.ui.mamaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM21:Z',
+                                  MotoRole.VS : 'SR08ID01SLM21:ZGAP',
+                                  MotoRole.HP : 'SR08ID01SLM21:Y',
+                                  MotoRole.HS : 'SR08ID01SLM21:YGAP'} )
 
-    self.ui.papaBear.setMotors(  {Slits.MotoRole.VP : 'SR08ID01SLM03:ZCENTRE',
-                                  Slits.MotoRole.VS : 'SR08ID01SLM03:ZGAP',
-                                  Slits.MotoRole.HP : 'SR08ID01SLM03:YCENTRE',
-                                  Slits.MotoRole.HS : 'SR08ID01SLM03:YGAP'} )
+    self.ui.papaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM03:ZCENTRE',
+                                  MotoRole.VS : 'SR08ID01SLM03:ZGAP',
+                                  MotoRole.HP : 'SR08ID01SLM03:YCENTRE',
+                                  MotoRole.HS : 'SR08ID01SLM03:YGAP'} )
 
+    @pyqtSlot()
+    def updateBase():
+      for slit in self.ui.babyBear, self.ui.papaBear, self.ui.mashaBear :
+        slit.setBase(20 if self.shMode.mode() == SHmode.Mode.MONO else 0)
+    self.shMode.updated.connect(updateBase)
 
 
 

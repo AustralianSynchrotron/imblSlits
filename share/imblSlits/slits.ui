@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>398</width>
-    <height>590</height>
+    <width>370</width>
+    <height>589</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -227,6 +227,30 @@
       </item>
      </layout>
     </widget>
+   </item>
+   <item row="8" column="2">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QLabel" name="limitW">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(128, 0, 0);</string>
+       </property>
+       <property name="text">
+        <string>Limit</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="linkW">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(128, 0, 0);</string>
+       </property>
+       <property name="text">
+        <string>No link</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
