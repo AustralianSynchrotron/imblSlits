@@ -137,22 +137,15 @@ class SlitsVis(QWidget) :
 
     # slits box
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38)), 0))
-    painter.drawRect( QRectF( -geom.getGeom(MotoRole.LF) , -geom.getGeom(MotoRole.BT),
-                              geom.getGeom(MotoRole.HS), geom.getGeom(MotoRole.VS) ));
+    painter.drawRect(QRectF(-geom.getGeom(MotoRole.LF), -geom.getGeom(MotoRole.BT),
+                             geom.getGeom(MotoRole.HS),  geom.getGeom(MotoRole.VS) ))
 
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38,50)), 0))
     painter.setBrush(QColor(227,121,38,50))
-    # bottom
-    painter.drawRect( QRectF(-fw2, -fh2, fw, fh2 - geom.getGeom(MotoRole.BT) ) );
-    # top
-    painter.drawRect( QRectF(-fw2, fh2, fw, geom.getGeom(MotoRole.TP) - fh2 ) );
-    # left
-    painter.drawRect( QRectF(-fw2, -fh2, fw2 - geom.getGeom(MotoRole.LF), fh ) );
-    # right
-    painter.drawRect( QRectF(fw2, -fh2, geom.getGeom(MotoRole.RT) - fw2, fh ) );
-
-
-    #painter.end()
+    painter.drawRect(QRectF(-fw2, -fh2, fw, fh2 - geom.getGeom(MotoRole.BT) ) ) # bottom
+    painter.drawRect(QRectF(-fw2,  fh2, fw, geom.getGeom(MotoRole.TP) - fh2 ) ) # top
+    painter.drawRect(QRectF(-fw2, -fh2, fw2 - geom.getGeom(MotoRole.LF), fh ) ) # left
+    painter.drawRect(QRectF( fw2, -fh2, geom.getGeom(MotoRole.RT) - fw2, fh ) ) # right
 
 
 class Slits(QWidget) :
