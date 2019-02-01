@@ -113,6 +113,42 @@ class MainWindow(QtWidgets.QMainWindow):
     tab = self.ui.tabWidget.setIconSize(QtCore.QSize(w,w))
     self.ui.famWidget.hide()
 
+
+    self.ui.pandaBear.distance = 14
+    self.ui.pandaBear.setMotors( {MotoRole.VP : 'SR08ID01SLW01:VPOS',
+                                  MotoRole.VS : 'SR08ID01SLW01:VOPEN',
+                                  MotoRole.LF : 'SR08ID01SLW01:LEFT',
+                                  MotoRole.RT : 'SR08ID01SLW01:RIGHT'} )
+
+    self.ui.babyBear.distance = 20
+    self.ui.babyBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM12:VCENTRE',
+                                  MotoRole.VS : 'SR08ID01SLM12:VSIZE',
+                                  MotoRole.HP : 'SR08ID01SLM12:HCENTRE',
+                                  MotoRole.HS : 'SR08ID01SLM12:HSIZE'} )
+                                  #MotoRole.LF : 'SR08ID01SLM12:IN',
+                                  #MotoRole.RT : 'SR08ID01SLM12:OUT',
+                                  #MotoRole.BT : 'SR08ID01SLM12:BOT',
+                                  #MotoRole.TP : 'SR08ID01SLM12:TOP'} )
+
+    self.ui.mamaBear.distance = 31
+    self.ui.mamaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM21:Z',
+                                  MotoRole.VS : 'SR08ID01SLM21:ZGAP',
+                                  MotoRole.HP : 'SR08ID01SLM21:Y',
+                                  MotoRole.HS : 'SR08ID01SLM21:YGAP'} )
+
+    self.ui.papaBear.distance = 136
+    self.ui.papaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM03:ZCENTRE',
+                                  MotoRole.VS : 'SR08ID01SLM03:ZGAP',
+                                  MotoRole.HP : 'SR08ID01SLM03:YCENTRE',
+                                  MotoRole.HS : 'SR08ID01SLM03:YGAP'} )
+
+    @pyqtSlot()
+    def updateBase():
+      for slit in self.ui.babyBear, self.ui.papaBear, self.ui.mashaBear :
+        slit.setBase(20 if self.shMode.mode() == SHmode.Mode.MONO else 0)
+    self.shMode.updated.connect(updateBase)
+
+
     tabLay = { self.ui.panda : self.ui.pandaTab.layout(),
                self.ui.baby  : self.ui.babyTab .layout(),
                self.ui.mama  : self.ui.mamaTab .layout(),
@@ -172,50 +208,19 @@ class MainWindow(QtWidgets.QMainWindow):
       if self.sender() not in distances.actions() :
         return
       elif '1A' in self.sender().text() :
-        self.ui.distance.setValue(14)
+        self.ui.distance.setValue(self.ui.pandaBear.distance)
       elif '1B' in self.sender().text() :
-        self.ui.distance.setValue(20)
+        self.ui.distance.setValue(self.ui.babyBear.distance)
       elif '2B' in self.sender().text() :
-        self.ui.distance.setValue(31)
+        self.ui.distance.setValue(self.ui.mamaBear.distance)
       elif '3B' in self.sender().text() :
-        self.ui.distance.setValue(136)
+        self.ui.distance.setValue(self.ui.papaBear.distance)
 
     distances.addAction('Enclosure 1A', distancePicked)
     distances.addAction('Enclosure 1B', distancePicked)
     distances.addAction('Enclosure 2B', distancePicked)
     distances.addAction('Enclosure 3B', distancePicked)
     self.ui.distances.setMenu(distances)
-
-    self.ui.pandaBear.setMotors( {MotoRole.VP : 'SR08ID01SLW01:VPOS',
-                                  MotoRole.VS : 'SR08ID01SLW01:VOPEN',
-                                  MotoRole.LF : 'SR08ID01SLW01:LEFT',
-                                  MotoRole.RT : 'SR08ID01SLW01:RIGHT'},
-                                 {MotoRole.LF : 1} )
-
-    self.ui.babyBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM12:VCENTRE',
-                                  MotoRole.VS : 'SR08ID01SLM12:VSIZE',
-                                  MotoRole.HP : 'SR08ID01SLM12:HCENTRE',
-                                  MotoRole.HS : 'SR08ID01SLM12:HSIZE'} )
-                                  #MotoRole.LF : 'SR08ID01SLM12:IN',
-                                  #MotoRole.RT : 'SR08ID01SLM12:OUT',
-                                  #MotoRole.BT : 'SR08ID01SLM12:BOT',
-                                  #MotoRole.TP : 'SR08ID01SLM12:TOP'} )
-
-    self.ui.mamaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM21:Z',
-                                  MotoRole.VS : 'SR08ID01SLM21:ZGAP',
-                                  MotoRole.HP : 'SR08ID01SLM21:Y',
-                                  MotoRole.HS : 'SR08ID01SLM21:YGAP'} )
-
-    self.ui.papaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM03:ZCENTRE',
-                                  MotoRole.VS : 'SR08ID01SLM03:ZGAP',
-                                  MotoRole.HP : 'SR08ID01SLM03:YCENTRE',
-                                  MotoRole.HS : 'SR08ID01SLM03:YGAP'} )
-
-    @pyqtSlot()
-    def updateBase():
-      for slit in self.ui.babyBear, self.ui.papaBear, self.ui.mashaBear :
-        slit.setBase(20 if self.shMode.mode() == SHmode.Mode.MONO else 0)
-    self.shMode.updated.connect(updateBase)
 
 
 

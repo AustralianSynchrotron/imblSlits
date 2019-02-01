@@ -15,7 +15,7 @@ class Driver(QWidget) :
   warnSS='background-color: rgb(128, 0, 0);'
 
   def __init__(self, parent):
-    super(QWidget, self).__init__(parent)
+    super(Driver, self).__init__(parent)
     self.ui = loadUi(execPath + 'driver.ui', self)
     self.ui.negative.clicked.connect(self.goNeg)
     self.ui.positive.clicked.connect(self.goPos)
