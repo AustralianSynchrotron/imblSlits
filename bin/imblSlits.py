@@ -117,13 +117,13 @@ class MainWindow(QtWidgets.QMainWindow):
     self.ui.famWidget.hide()
 
 
-    self.ui.pandaBear.distance = 14
+    self.ui.pandaBear.ui.visual.dist = 14
     self.ui.pandaBear.setMotors( {MotoRole.VP : 'SR08ID01SLW01:VPOS',
                                   MotoRole.VS : 'SR08ID01SLW01:VOPEN',
                                   MotoRole.LF : 'SR08ID01SLW01:LEFT',
                                   MotoRole.RT : 'SR08ID01SLW01:RIGHT'} )
 
-    self.ui.babyBear.distance = 20
+    self.ui.babyBear.ui.visual.dist = 20
     self.ui.babyBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM12:VCENTRE',
                                   MotoRole.VS : 'SR08ID01SLM12:VSIZE',
                                   MotoRole.HP : 'SR08ID01SLM12:HCENTRE',
@@ -133,13 +133,13 @@ class MainWindow(QtWidgets.QMainWindow):
                                   #MotoRole.BT : 'SR08ID01SLM12:BOT',
                                   #MotoRole.TP : 'SR08ID01SLM12:TOP'} )
 
-    self.ui.mamaBear.distance = 31
+    self.ui.mamaBear.ui.visual.dist = 31
     self.ui.mamaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM21:Z',
                                   MotoRole.VS : 'SR08ID01SLM21:ZGAP',
                                   MotoRole.HP : 'SR08ID01SLM21:Y',
                                   MotoRole.HS : 'SR08ID01SLM21:YGAP'} )
 
-    self.ui.papaBear.distance = 136
+    self.ui.papaBear.ui.visual.dist = 136
     self.ui.papaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM03:ZCENTRE',
                                   MotoRole.VS : 'SR08ID01SLM03:ZGAP',
                                   MotoRole.HP : 'SR08ID01SLM03:YCENTRE',
@@ -192,13 +192,13 @@ class MainWindow(QtWidgets.QMainWindow):
       if self.sender() not in distances.actions() :
         return
       elif '1A' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.pandaBear.distance)
+        self.ui.distance.setValue(self.ui.pandaBear.ui.visual.dist)
       elif '1B' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.babyBear.distance)
+        self.ui.distance.setValue(self.ui.babyBear.ui.visual.dist)
       elif '2B' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.mamaBear.distance)
+        self.ui.distance.setValue(self.ui.mamaBear.ui.visual.dist)
       elif '3B' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.papaBear.distance)
+        self.ui.distance.setValue(self.ui.papaBear.ui.visual.dist)
 
     distances.addAction('Enclosure 1A', distancePicked)
     distances.addAction('Enclosure 1B', distancePicked)

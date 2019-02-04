@@ -42,32 +42,139 @@ class Face(QWidget):
     self.labTxt.setText(text)
 
 
-class BeamGeometry() :
+#class BeamGeometry() :
+#
+#  def  __init__(self):
+#    self.hp = 0
+#    self.hs = 0
+#    self.vp = 0
+#    self.vs = 0
+#    self.base = 0
+#
+#  def getGeom(self, rol) :
+#    if   rol is MotoRole.BT :
+#      return self.vs/2 - self.vp
+#    elif rol is MotoRole.TP :
+#      return self.vs/2 + self.vp
+#    elif rol is MotoRole.LF :
+#      return self.hs/2 - self.hp
+#    elif rol is MotoRole.RT :
+#      return self.hs/2 + self.hp
+#    elif rol is MotoRole.HS :
+#      return self.hs
+#    elif rol is MotoRole.HP :
+#      return self.hp
+#    elif rol is MotoRole.VS :
+#      return self.vs
+#    elif rol is MotoRole.VP :
+#      return self.vp
+#
+#  def setMot(self, rol, pos):
+#    if   rol is MotoRole.BT :
+#      tpo = self.getGeom(MotoRole.TP)
+#      self.vp = (tpo - pos)/2 - self.base
+#      self.vs = tpo + pos
+#    elif rol is MotoRole.TP :
+#      bto = self.getGeom(MotoRole.BT)
+#      self.vp = (pos - bto) / 2 - self.base
+#      self.vs = pos + bto
+#    elif rol is MotoRole.LF :
+#      rto = self.getGeom(MotoRole.RT)
+#      self.hp = (rto - pos)/2
+#      self.hs = rto + pos
+#    elif rol is MotoRole.RT :
+#      lfo = self.getGeom(MotoRole.LF)
+#      self.hp = (pos - lfo) / 2
+#      self.hs = pos + lfo
+#    elif rol is MotoRole.HS :
+#      self.hs = pos
+#    elif rol is MotoRole.HP :
+#      self.hp = pos
+#    elif rol is MotoRole.VS :
+#      self.vs = pos
+#    elif rol is MotoRole.VP :
+#      self.vp = pos - self.base
+#
+#  def getMot(self, rol):
+#    if rol in [ MotoRole.BT, MotoRole.TP, MotoRole.VP ] :
+#      return self.getGeom(rol) + self.base
+#    else :
+#      return self.getGeom(rol)
+#
+#  def scaled(self, scale=1) :
+#    newGeom = BeamGeometry()
+#    newGeom.hp = scale * self.hp
+#    newGeom.hs = scale * self.hs
+#    newGeom.vp = scale * self.vp
+#    newGeom.vs = scale * self.vs
+#    newGeom.base = self.base
+#    return newGeom
+#
 
-  def  __init__(self):
+
+class SlitsVis(QWidget) :
+
+  beamVw = 4.85714
+  beamVh = 0.28571
+
+  def __init__(self, parent):
+
+    super(SlitsVis, self).__init__(parent) # parent is supposed to be Slits
+    self.setMinimumWidth(100)
+    self.setMinimumHeight( self.minimumWidth() * self.beamVh / self.beamVw )
+    szpol = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+    szpol.setHeightForWidth(True)
+    self.setSizePolicy(szpol)
+
     self.hp = 0
     self.hs = 0
     self.vp = 0
     self.vs = 0
     self.base = 0
+    self.dist = 1
 
-  def getGeom(self, rol) :
-    if   rol is MotoRole.BT :
-      return self.vs/2 - self.vp
-    elif rol is MotoRole.TP :
-      return self.vs/2 + self.vp
-    elif rol is MotoRole.LF :
-      return self.hs/2 - self.hp
-    elif rol is MotoRole.RT :
-      return self.hs/2 + self.hp
-    elif rol is MotoRole.HS :
-      return self.hs
-    elif rol is MotoRole.HP :
-      return self.hp
-    elif rol is MotoRole.VS :
-      return self.vs
-    elif rol is MotoRole.VP :
-      return self.vp
+
+  def heightForWidth(self, w) :
+    return w * self.beamVh / self.beamVw
+
+
+  def paintEvent(self, event):
+
+    fw = self.beamVw
+    fh = self.beamVh
+    fw2 = fw/2.0
+    fh2 = fh/2.0
+
+    painter = QtGui.QPainter(self)
+
+    painter.setRenderHint(QtGui.QPainter.Antialiasing, True)
+    painter.translate( self.width()/2.0 , self.height()/2.0)
+    scale = self.height() / fh \
+            if self.width() / self.height() > fw/fh else \
+            self.width() / fw
+    painter.scale(scale, -scale)
+
+    # beam
+    #painter.drawRect(QRectF(-fw2, -fh2, fw, fh));
+
+    # coordinates
+    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0)), 0, QtCore.Qt.DotLine))
+    painter.drawLine(QtCore.QLineF(-fw2,0,fw2,0))
+    painter.drawLine(QtCore.QLineF(0,-fh2,0,fh2))
+
+    geom = self.getRect(True)
+
+    # slits box
+    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38)), 0))
+    painter.drawRect(geom)
+
+    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38,50)), 0))
+    painter.setBrush(QColor(227,121,38,50))
+    painter.drawRect(QRectF(-fw2, geom.bottom() , fw, fh2 - geom.bottom() ) ) # top
+    painter.drawRect(QRectF(-fw2, geom.top(), fw, geom.top() - fh2 ) ) # bot
+    painter.drawRect(QRectF(-fw2, -fh2, fw2 + geom.left(), fh ) ) # left
+    painter.drawRect(QRectF( fw2, -fh2, geom.right() - fw2, fh ) ) # right
+
 
   def setMot(self, rol, pos):
     if   rol is MotoRole.BT :
@@ -101,72 +208,29 @@ class BeamGeometry() :
     else :
       return self.getGeom(rol)
 
-  def scaled(self, scale=1) :
-    newGeom = BeamGeometry()
-    newGeom.hp = scale * self.hp
-    newGeom.hs = scale * self.hs
-    newGeom.vp = scale * self.vp
-    newGeom.vs = scale * self.vs
-    newGeom.base = self.base
-    return newGeom
+  def getGeom(self, rol) :
+    if   rol is MotoRole.BT :
+      return self.vs/2 - self.vp
+    elif rol is MotoRole.TP :
+      return self.vs/2 + self.vp
+    elif rol is MotoRole.LF :
+      return self.hs/2 - self.hp
+    elif rol is MotoRole.RT :
+      return self.hs/2 + self.hp
+    elif rol is MotoRole.HS :
+      return self.hs
+    elif rol is MotoRole.HP :
+      return self.hp
+    elif rol is MotoRole.VS :
+      return self.vs
+    elif rol is MotoRole.VP :
+      return self.vp
 
+  def getRect(self, norm=False) :
+    fc = 1/self.dist if norm else 1
+    return QRectF(-fc*self.getGeom(MotoRole.LF), -fc*self.getGeom(MotoRole.BT),
+                   fc*self.getGeom(MotoRole.HS),  fc*self.getGeom(MotoRole.VS))
 
-
-class SlitsVis(QWidget) :
-  beamVw = 4.85714
-  beamVh = 0.28571
-
-  def __init__(self, parent):
-    super(SlitsVis, self).__init__(parent) # parent is supposed to be Slits
-    self.setMinimumWidth(100)
-    self.setMinimumHeight( self.minimumWidth() * self.beamVh / self.beamVw );
-    szpol = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored);
-    szpol.setHeightForWidth(True);
-    self.setSizePolicy(szpol);
-
-
-  def heightForWidth(self, w) :
-    return w * self.beamVh / self.beamVw
-
-
-  def paintEvent(self, event):
-
-
-    fw = self.beamVw
-    fh = self.beamVh
-    fw2 = fw/2.0
-    fh2 = fh/2.0
-
-    painter = QtGui.QPainter(self)
-
-    painter.setRenderHint(QtGui.QPainter.Antialiasing, True)
-    painter.translate( self.width()/2.0 , self.height()/2.0)
-    scale = self.height() / fh \
-            if self.width() / self.height() > fw/fh else \
-            self.width() / fw
-    painter.scale(scale, -scale)
-
-    # beam
-    #painter.drawRect(QRectF(-fw2, -fh2, fw, fh));
-
-    # coordinates
-    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0)), 0, QtCore.Qt.DotLine))
-    painter.drawLine(QtCore.QLineF(-fw2,0,fw2,0))
-    painter.drawLine(QtCore.QLineF(0,-fh2,0,fh2))
-
-    geom = self.parent().geometry.scaled(1/self.parent().distance)
-
-    # slits box
-    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38)), 0))
-    painter.drawRect(QRectF(-geom.getGeom(MotoRole.LF), -geom.getGeom(MotoRole.BT),
-                             geom.getGeom(MotoRole.HS),  geom.getGeom(MotoRole.VS) ))
-
-    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38,50)), 0))
-    painter.setBrush(QColor(227,121,38,50))
-    painter.drawRect(QRectF(-fw2, -fh2, fw, fh2 - geom.getGeom(MotoRole.BT) ) ) # bottom
-    painter.drawRect(QRectF(-fw2,  fh2, fw, geom.getGeom(MotoRole.TP) - fh2 ) ) # top
-    painter.drawRect(QRectF(-fw2, -fh2, fw2 - geom.getGeom(MotoRole.LF), fh ) ) # left
-    painter.drawRect(QRectF( fw2, -fh2, geom.getGeom(MotoRole.RT) - fw2, fh ) ) # right
 
 
 class Slits(QWidget) :
@@ -176,7 +240,7 @@ class Slits(QWidget) :
   changedMotion     = pyqtSignal(bool)
   changedConnection = pyqtSignal(bool)
   changedLimits     = pyqtSignal(bool)
-  changedGeometry   = pyqtSignal(BeamGeometry)
+  changedGeometry   = pyqtSignal()
 
   def __init__(self, parent):
     super(Slits, self).__init__(parent)
@@ -204,7 +268,6 @@ class Slits(QWidget) :
     self.isMoving = False
     self.isConnected = False
     self.isOnLimit = False
-    self.geometry = BeamGeometry()
     self.motors = {}
     self.drivers = {}
     for rol in list(MotoRole) :
@@ -250,25 +313,22 @@ class Slits(QWidget) :
 
   @pyqtSlot(float)
   def setBase(self, base) :
-    self.geometry.vp -= base - self.geometry.base
-    self.geometry.base = base
+    self.ui.visual.vp -= base - self.ui.visual.base
+    self.ui.visual.base = base
     self.onPositionChange()
-    for rol in self.drivers.keys() :
-      self.drivers[rol].setPosition(self.geometry.getGeom(rol))
-    self.changedGeometry.emit(self.geometry)
+    self.changedGeometry.emit()
 
 
   @pyqtSlot()
   def onPositionChange(self):
-    newGeometry = self.geometry.scaled()
+    oldRect = self.ui.visual.getRect()
     for rol in self.motors.keys() :
       pos = self.motors[rol].getUserPosition()
-      newGeometry.setMot(rol, pos)
-    if newGeometry != self.geometry :
-      self.geometry = newGeometry
-      for rol in self.drivers.keys() :
-        self.drivers[rol].setPosition(self.geometry.getGeom(rol))
-      self.changedGeometry.emit(self.geometry)
+      self.ui.visual.setMot(rol, pos)
+    for rol in self.drivers.keys() :
+      self.drivers[rol].setPosition(self.ui.visual.getGeom(rol))
+    if oldRect != self.ui.visual.getRect() :
+      self.changedGeometry.emit()
 
 
   @pyqtSlot()
