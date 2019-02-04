@@ -31,18 +31,14 @@
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>4</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
       </property>
       <widget class="QWidget" name="pandaTab">
-       <attribute name="icon">
-        <iconset>
-         <normaloff>panda.png</normaloff>panda.png</iconset>
-       </attribute>
        <attribute name="title">
-        <string>HHLS</string>
+        <string/>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <property name="spacing">
@@ -72,12 +68,8 @@
        </layout>
       </widget>
       <widget class="QWidget" name="babyTab">
-       <attribute name="icon">
-        <iconset>
-         <normaloff>baby.png</normaloff>baby.png</iconset>
-       </attribute>
        <attribute name="title">
-        <string>Baby Bear</string>
+        <string/>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
@@ -107,12 +99,8 @@
        </layout>
       </widget>
       <widget class="QWidget" name="mamaTab">
-       <attribute name="icon">
-        <iconset>
-         <normaloff>mama.png</normaloff>mama.png</iconset>
-       </attribute>
        <attribute name="title">
-        <string>Mama Bear</string>
+        <string/>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <property name="spacing">
@@ -142,12 +130,8 @@
        </layout>
       </widget>
       <widget class="QWidget" name="papaTab">
-       <attribute name="icon">
-        <iconset>
-         <normaloff>papa.png</normaloff>papa.png</iconset>
-       </attribute>
        <attribute name="title">
-        <string>Papa Bear</string>
+        <string/>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <property name="spacing">
@@ -177,12 +161,8 @@
        </layout>
       </widget>
       <widget class="QWidget" name="mashaTab">
-       <attribute name="icon">
-        <iconset>
-         <normaloff>masha.png</normaloff>masha.png</iconset>
-       </attribute>
        <attribute name="title">
-        <string>Beam</string>
+        <string/>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="spacing">

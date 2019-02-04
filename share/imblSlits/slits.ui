@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>370</width>
-    <height>673</height>
+    <width>323</width>
+    <height>605</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -124,9 +124,6 @@
    <item row="3" column="2">
     <widget class="Driver" name="dHP" native="true"/>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="face"/>
-   </item>
    <item row="4" column="1">
     <widget class="Driver" name="dVS" native="true"/>
    </item>
@@ -219,6 +216,9 @@
    <item row="2" column="1">
     <widget class="Driver" name="dVP" native="true"/>
    </item>
+   <item row="0" column="0" colspan="3">
+    <widget class="SlitsVis" name="visual" native="true"/>
+   </item>
    <item row="10" column="0">
     <widget class="QWidget" name="spacer" native="true">
      <layout class="QVBoxLayout" name="verticalLayout">
@@ -252,18 +252,23 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="3">
-    <widget class="SlitsVis" name="visual" native="true"/>
+   <item row="4" column="2">
+    <widget class="QWidget" name="layFaceTab" native="true">
+     <layout class="QVBoxLayout" name="layout_1"/>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QWidget" name="layFaceFam" native="true">
+     <layout class="QVBoxLayout" name="layout_2">
+      <item>
+       <widget class="Face" name="face" native="true"/>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>Driver</class>
-   <extends>QWidget</extends>
-   <header location="global">driver.h</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>QMDoubleSpinBox</class>
    <extends>QDoubleSpinBox</extends>
@@ -272,6 +277,12 @@
     <signal>valueEdited(double)</signal>
     <signal>escaped()</signal>
    </slots>
+  </customwidget>
+  <customwidget>
+   <class>Driver</class>
+   <extends>QWidget</extends>
+   <header location="global">driver.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>QMotorStack</class>
@@ -285,9 +296,13 @@
    <header location="global">slits.h</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>Face</class>
+   <extends>QWidget</extends>
+   <header location="global">slits.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
- <resources>
-  <include location="imblSlits.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

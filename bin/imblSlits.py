@@ -8,7 +8,7 @@ from enum import Enum
 import epics
 
 binPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
-sharePath = binPath + "../share/imblSlits"
+sharePath = binPath + "../share/imblSlits/"
 sys.path.append(sharePath)
 from slits import Slits, MotoRole
 
@@ -88,29 +88,32 @@ class MainWindow(QtWidgets.QMainWindow):
 
   shMode = SHmode()
   blMode = BLmode()
+  slitNames = {'panda': 'HHLS',
+               'baby' : 'Baby bear',
+               'mama' : 'Mama bear',
+               'papa' : 'Papa bear',
+               'masha': 'Detector' }
 
   def __init__(self):
 
     super(MainWindow, self).__init__()
-    self.ui = loadUi(sharePath + '/imblSlitsMainWindow.ui', self)
+    self.ui = loadUi(sharePath + 'imblSlitsMainWindow.ui', self)
     #self.ui = ui_slits.Ui_MainWindow()
     #self.ui.setupUi(self)
 
-    rotTrans = QtGui.QTransform().rotate(-90)
+    for nslt in self.slitNames.keys() :
+      eval('self.ui.'+nslt+'Bear.face.set(sharePath+nslt+\'.png\', self.slitNames[nslt])')
+
     tab = self.ui.tabWidget.tabBar()
     tab.setExpanding(True)
     for itab in range(0, tab.count()):
-      lab = QtWidgets.QLabel(tab.tabText(itab))
-      tab.setTabText(itab,'')
-      tab.setTabButton(itab,  QtWidgets.QTabBar.LeftSide, lab )
-      icon = tab.tabIcon(itab)
       slt = self.ui.tabWidget.widget(itab).findChild(Slits)
-      if slt :
-        slt.face.setPixmap( icon.pixmap(slt.face.minimumSize()).transformed(rotTrans) )
-        slt.face.hide()
+      slt.layFaceTab.layout().addWidget(slt.face)
+      tab.setTabButton(itab,  QtWidgets.QTabBar.LeftSide, slt.layFaceTab)
 
-    w = self.ui.tabWidget.tabBar().width()
-    tab = self.ui.tabWidget.setIconSize(QtCore.QSize(w,w))
+
+    #w = self.ui.tabWidget.tabBar().width()
+    #tab = self.ui.tabWidget.setIconSize(QtCore.QSize(w,w))
     self.ui.famWidget.hide()
 
 
@@ -148,40 +151,21 @@ class MainWindow(QtWidgets.QMainWindow):
         slit.setBase(20 if self.shMode.mode() == SHmode.Mode.MONO else 0)
     self.shMode.updated.connect(updateBase)
 
-
-    tabLay = { self.ui.panda : self.ui.pandaTab.layout(),
-               self.ui.baby  : self.ui.babyTab .layout(),
-               self.ui.mama  : self.ui.mamaTab .layout(),
-               self.ui.papa  : self.ui.papaTab .layout(),
-               self.ui.masha : self.ui.mashaTab.layout()  }
-    famLay = { self.ui.panda : self.ui.pandaFam.layout(),
-               self.ui.baby  : self.ui.babyFam .layout(),
-               self.ui.mama  : self.ui.mamaFam .layout(),
-               self.ui.papa  : self.ui.papaFam .layout(),
-               self.ui.masha : self.ui.mashaFam.layout()  }
-
     @pyqtSlot()
     def uiModeSwap():
-      if self.ui.mashaFam.layout().count() :
-        self.ui.famWidget.hide()
-        for slt, tal in tabLay.items() :
-          tal.addWidget(slt)
-          slt.findChild(Slits).face.hide()
-        self.ui.tabWidget.show()
-        self.sender().setText('In tabs')
-      else :
-        self.ui.tabWidget.hide()
-        for slt, fal in famLay.items() :
-          fal.addWidget(slt)
-          slt.findChild(Slits).face.show()
-        self.ui.famWidget.show()
-        self.sender().setText('All')
-      for slt in famLay.keys() :
-        slt.show()
+      toTab = self.ui.famWidget.isVisible()
+      self.ui.famWidget.setVisible(not toTab)
+      self.ui.tabWidget.setVisible(toTab)
+      wslt = 'Tab' if toTab else 'Fam'
+      for nslt in self.slitNames.keys():
+        eval('self.ui.'+nslt+wslt+'.layout().addWidget(self.ui.'+nslt+')')
+      for slt in self.ui.findChildren(Slits) :
+        eval('slt.layFace'+wslt+'.layout().addWidget(slt.face)')
+      self.sender().setText('All' if toTab else 'In tabs')
       QtCore.QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
-    self.ui.statusbar.addPermanentWidget(QtWidgets.QLabel('View: ', self))
-    uimode = QtWidgets.QPushButton('all', self)
+    self.ui.statusbar.addPermanentWidget(QtWidgets.QLabel('Show: ', self))
+    uimode = QtWidgets.QPushButton('All', self)
     uimode.clicked.connect(uiModeSwap)
     self.ui.statusbar.addPermanentWidget(uimode);
 

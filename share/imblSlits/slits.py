@@ -21,6 +21,27 @@ class MotoRole(Enum) :
   TP = auto()
   BT = auto()
 
+
+class Face(QWidget):
+
+  def __init__(self, parent):
+    super(Face, self).__init__(parent)
+    lyt = QtWidgets.QVBoxLayout(self)
+    lyt.setContentsMargins(0, 0, 0, 0)
+    lyt.setSpacing(0)
+    self.labImg = QtWidgets.QLabel(self)
+    lyt.addWidget(self.labImg)
+    self.labTxt = QtWidgets.QLabel(self)
+    szpol = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+    self.labTxt.setSizePolicy(szpol)
+    lyt.addWidget(self.labTxt)
+    lyt.setAlignment(self.labTxt, QtCore.Qt.AlignHCenter)
+
+  def set(self, image, text):
+    self.labImg.setStyleSheet('image: url(' + image + ');')
+    self.labTxt.setText(text)
+
+
 class BeamGeometry() :
 
   def  __init__(self):
@@ -185,14 +206,9 @@ class Slits(QWidget) :
     self.isOnLimit = False
     self.geometry = BeamGeometry()
     self.motors = {}
-    self.drivers = { MotoRole.HP : self.ui.dHP,
-                     MotoRole.HS : self.ui.dHS,
-                     MotoRole.VP : self.ui.dVP,
-                     MotoRole.VS : self.ui.dVS,
-                     MotoRole.LF : self.ui.dLF,
-                     MotoRole.RT : self.ui.dRT,
-                     MotoRole.TP : self.ui.dTP,
-                     MotoRole.BT : self.ui.dBT }
+    self.drivers = {}
+    for rol in list(MotoRole) :
+      exec('self.drivers[MotoRole.'+rol.name+'] = self.ui.d'+rol.name)
 
     self.ui.stack.lock(True)
     self.ui.stack.hide()
