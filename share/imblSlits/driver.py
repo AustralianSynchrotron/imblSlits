@@ -8,21 +8,18 @@ execPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 
 class Driver(QWidget) :
 
-  goNeg = pyqtSignal()
-  goPos = pyqtSignal()
   goToP = pyqtSignal(float)
+  vChng = pyqtSignal(float)
 
   warnSS='background-color: rgb(128, 0, 0);'
 
   def __init__(self, parent):
     super(Driver, self).__init__(parent)
     self.ui = loadUi(execPath + 'driver.ui', self)
-    self.ui.negative.clicked.connect(self.goNeg)
-    self.ui.positive.clicked.connect(self.goPos)
-    @pyqtSlot()
-    def onEditingFinished() :
-      self.goToP.emit(self.ui.position.value())
-    self.ui.position.editingFinished.connect(onEditingFinished)
+    self.ui.negative.clicked.connect(lambda: self.goToP.emit(self.setPos(self.pos()-self.step())))
+    self.ui.positive.clicked.connect(lambda: self.goToP.emit(self.setPos(self.pos()+self.step())))
+    self.ui.position.editingFinished.connect(lambda: self.goToP.emit(self.pos()))
+    self.ui.position.valueChanged.connect(self.vChng)
 
   @pyqtSlot(bool)
   def setHiLimit(self, lms) :
@@ -34,11 +31,21 @@ class Driver(QWidget) :
 
   @pyqtSlot(bool)
   def setMoving(self, mvs) :
-    self.ui.position.setStyleSheet(self.warnSS if lms else '')
+    self.ui.position.setStyleSheet(self.warnSS if mvs else '')
 
   @pyqtSlot(float)
-  def setPosition(self, pos) :
+  def setPos(self, pos, blockSignal=False) :
+    self.ui.position.blockSignals(blockSignal)
     self.ui.position.setValue(pos)
+    self.ui.position.blockSignals(False)
+    return self.pos()
+
+  def pos(self) :
+    return self.ui.position.value()
+
+  def step(self) :
+    return self.parent().ui.step.value()
+
 
 
 

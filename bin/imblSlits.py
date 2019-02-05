@@ -101,8 +101,11 @@ class MainWindow(QtWidgets.QMainWindow):
     #self.ui = ui_slits.Ui_MainWindow()
     #self.ui.setupUi(self)
 
-    for nslt in self.slitNames.keys() :
-      eval('self.ui.'+nslt+'Bear.face.set(sharePath+nslt+\'.png\', self.slitNames[nslt])')
+    for nslt, desc in self.slitNames.items() :
+      eval('self.ui.'+nslt+'Bear.face.set(sharePath+nslt+\'.png\', desc)')
+      if (nslt is not 'masha') :
+        eval('self.ui.'+nslt+'Synch.setText(desc)')
+        eval('self.ui.'+nslt+'Synch.setIcon(QtGui.QIcon(sharePath+nslt+\'.png\'))')
 
     tab = self.ui.tabWidget.tabBar()
     tab.setExpanding(True)
@@ -117,13 +120,13 @@ class MainWindow(QtWidgets.QMainWindow):
     self.ui.famWidget.hide()
 
 
-    self.ui.pandaBear.ui.visual.dist = 14
+    self.ui.pandaBear.dist = 14
     self.ui.pandaBear.setMotors( {MotoRole.VP : 'SR08ID01SLW01:VPOS',
                                   MotoRole.VS : 'SR08ID01SLW01:VOPEN',
                                   MotoRole.LF : 'SR08ID01SLW01:LEFT',
                                   MotoRole.RT : 'SR08ID01SLW01:RIGHT'} )
 
-    self.ui.babyBear.ui.visual.dist = 20
+    self.ui.babyBear.dist = 20
     self.ui.babyBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM12:VCENTRE',
                                   MotoRole.VS : 'SR08ID01SLM12:VSIZE',
                                   MotoRole.HP : 'SR08ID01SLM12:HCENTRE',
@@ -133,13 +136,13 @@ class MainWindow(QtWidgets.QMainWindow):
                                   #MotoRole.BT : 'SR08ID01SLM12:BOT',
                                   #MotoRole.TP : 'SR08ID01SLM12:TOP'} )
 
-    self.ui.mamaBear.ui.visual.dist = 31
+    self.ui.mamaBear.dist = 31
     self.ui.mamaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM21:Z',
                                   MotoRole.VS : 'SR08ID01SLM21:ZGAP',
                                   MotoRole.HP : 'SR08ID01SLM21:Y',
                                   MotoRole.HS : 'SR08ID01SLM21:YGAP'} )
 
-    self.ui.papaBear.ui.visual.dist = 136
+    self.ui.papaBear.dist = 136
     self.ui.papaBear.setMotors(  {MotoRole.VP : 'SR08ID01SLM03:ZCENTRE',
                                   MotoRole.VS : 'SR08ID01SLM03:ZGAP',
                                   MotoRole.HP : 'SR08ID01SLM03:YCENTRE',
@@ -191,20 +194,44 @@ class MainWindow(QtWidgets.QMainWindow):
     def distancePicked():
       if self.sender() not in distances.actions() :
         return
-      elif '1A' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.pandaBear.ui.visual.dist)
-      elif '1B' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.babyBear.ui.visual.dist)
-      elif '2B' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.mamaBear.ui.visual.dist)
-      elif '3B' in self.sender().text() :
-        self.ui.distance.setValue(self.ui.papaBear.ui.visual.dist)
+      sndtxt = self.sender().text().replace('&','')
+      nslt = [ns for ns,desc in self.slitNames.items() if sndtxt == desc][0]
+      if nslt:
+        eval('self.ui.distance.setValue(self.ui.'+nslt+'Bear.dist)')
 
-    distances.addAction('Enclosure 1A', distancePicked)
-    distances.addAction('Enclosure 1B', distancePicked)
-    distances.addAction('Enclosure 2B', distancePicked)
-    distances.addAction('Enclosure 3B', distancePicked)
+    for nslt, desc in self.slitNames.items() :
+      if (nslt is not 'masha') :
+        distances.addAction(QtGui.QIcon(sharePath+nslt+'.png'), desc, distancePicked)
     self.ui.distances.setMenu(distances)
+
+
+    synchs = QtWidgets.QMenu(self)
+
+    @pyqtSlot()
+    def synchPicked():
+      if self.sender() not in synchs.actions() :
+        return
+      #for nslt, desc in self.slitNames.items() :
+      #  if (nslt is not 'masha') :
+      #    synchs.addAction(desc, synchPicked)
+      #elif '1A' in self.sender().text() :
+      #  self.ui.distance.setValue(self.ui.pandaBear.ui.visual.dist)
+      #elif '1B' in self.sender().text() :
+      #  self.ui.distance.setValue(self.ui.babyBear.ui.visual.dist)
+      #elif '2B' in self.sender().text() :
+      #  self.ui.distance.setValue(self.ui.mamaBear.ui.visual.dist)
+      #elif '3B' in self.sender().text() :
+      #  self.ui.distance.setValue(self.ui.papaBear.ui.visual.dist)
+
+    synchs.addAction('Seen in any', synchPicked)
+    synchs.addAction('Seen in all', synchPicked)
+    for nslt, desc in self.slitNames.items() :
+      if (nslt is not 'masha') :
+        synchs.addAction(QtGui.QIcon(sharePath+nslt+'.png'), desc, synchPicked)
+    self.ui.synchMasha.setMenu(synchs)
+
+
+
 
 
 
