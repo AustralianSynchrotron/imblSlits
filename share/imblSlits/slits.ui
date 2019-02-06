@@ -26,7 +26,7 @@
       <item row="1" column="0" colspan="2">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
-         <widget class="QMDoubleSpinBox" name="step">
+         <widget class="QDoubleSpinBox" name="step">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -45,6 +45,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
         <property name="text">
          <string>/10</string>
         </property>
@@ -57,6 +60,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
         </property>
         <property name="text">
          <string>/2</string>
@@ -71,6 +77,9 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
         <property name="text">
          <string>*2</string>
         </property>
@@ -83,6 +92,9 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
         </property>
         <property name="text">
          <string>*10</string>
@@ -269,15 +281,6 @@
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QMDoubleSpinBox</class>
-   <extends>QDoubleSpinBox</extends>
-   <header location="global">qtpvwidgets.h</header>
-   <slots>
-    <signal>valueEdited(double)</signal>
-    <signal>escaped()</signal>
-   </slots>
-  </customwidget>
   <customwidget>
    <class>Driver</class>
    <extends>QWidget</extends>
