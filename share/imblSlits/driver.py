@@ -18,7 +18,7 @@ class Driver(QWidget) :
     self.ui = loadUi(execPath + 'driver.ui', self)
     self.ui.negative.clicked.connect(lambda: self.goToP.emit(self.setPos(self.pos()-self.step())))
     self.ui.positive.clicked.connect(lambda: self.goToP.emit(self.setPos(self.pos()+self.step())))
-    self.ui.position.editingFinished.connect(lambda: self.goToP.emit(self.pos()))
+    self.ui.position.valueEdited.connect(lambda: self.goToP.emit(self.pos()))
     self.ui.position.valueChanged.connect(self.vChng)
 
   @pyqtSlot(bool)

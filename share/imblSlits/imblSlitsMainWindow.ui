@@ -209,15 +209,18 @@
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="distance">
+              <widget class="QDoubleSpinBox" name="distance">
                <property name="suffix">
                 <string>m</string>
                </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
                <property name="minimum">
-                <number>14</number>
+                <double>14.000000000000000</double>
                </property>
                <property name="maximum">
-                <number>140</number>
+                <double>140.000000000000000</double>
                </property>
               </widget>
              </item>
