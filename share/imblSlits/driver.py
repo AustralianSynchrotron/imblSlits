@@ -16,9 +16,9 @@ class Driver(QWidget) :
   def __init__(self, parent):
     super(Driver, self).__init__(parent)
     self.ui = loadUi(execPath + 'driver.ui', self)
-    self.ui.negative.clicked.connect(lambda: self.goToP.emit(self.setPos(self.pos()-self.step())))
-    self.ui.positive.clicked.connect(lambda: self.goToP.emit(self.setPos(self.pos()+self.step())))
-    self.ui.position.valueEdited.connect(lambda: self.goToP.emit(self.pos()))
+    self.ui.negative.clicked.connect(self.onArrowclick)
+    self.ui.positive.clicked.connect(self.onArrowclick)
+    self.ui.position.valueEdited.connect(self.goToP)
     self.ui.position.valueChanged.connect(self.vChng)
 
   @pyqtSlot(bool)
@@ -40,11 +40,21 @@ class Driver(QWidget) :
     self.ui.position.blockSignals(False)
     return self.pos()
 
+  @pyqtSlot(bool)
+  def onArrowclick(self) :
+    self.sender().setFocus()
+    cf = 1 if self.sender() is self.ui.positive else -1
+    self.setPos(self.pos() + cf*self.step())
+    self.goToP.emit(self.pos())
+    self.sender().clearFocus()
+
   def pos(self) :
     return self.ui.position.value()
 
   def step(self) :
     return self.parent().ui.step.value()
+
+
 
 
 

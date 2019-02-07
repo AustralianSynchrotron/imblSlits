@@ -1,7 +1,7 @@
 import sys, os, copy
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QRectF, QLineF
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QLineF
 from PyQt5.QtGui import  QPen, QBrush, QColor
 from PyQt5.uic import loadUi
 from enum import Enum, auto
@@ -13,7 +13,7 @@ from driver import Driver
 
 
 
-class QRectF(QRectF):
+class QRectF(QtCore.QRectF) :
   def __mul__(self,flt):
     return QRectF(self.x()*flt, self.y()*flt, self.width()*flt, self.height()*flt)
   __rmul__ = __mul__
@@ -23,9 +23,7 @@ class QRectF(QRectF):
     return "%f x %f %+f %+f" % (self.width(), self.height(), self.center().x(), self.center().y() )
 
 
-
-
-class MotoRole(Enum) :
+class MR(Enum) :
   HP = auto()
   VP = auto()
   HS = auto()
@@ -34,6 +32,76 @@ class MotoRole(Enum) :
   RT = auto()
   TP = auto()
   BT = auto()
+
+
+
+def pos2pos(pos, strict=False) :
+
+  fpos = {}
+
+  def badin(rol) :
+    return rol in pos and pos[rol] != fpos[rol] and strict
+
+  if MR.BT in pos or MR.TP in pos :
+    if MR.BT not in pos or MR.TP not in pos :
+      return None
+    fpos[MR.BT] = pos[MR.BT]
+    fpos[MR.TP] = pos[MR.TP]
+    fpos[MR.VP] = pos[MR.TP]/2 - pos[MR.BT]/2
+    fpos[MR.VS] = pos[MR.TP] + pos[MR.BT]
+    if badin(MR.VP) or badin(MR.VS) :
+      return None
+
+  if MR.VP in pos or MR.VS in pos :
+    if MR.VP not in pos or MR.VS not in pos :
+      return None
+    fpos[MR.BT] = pos[MR.VS]/2 + pos[MR.VP]
+    fpos[MR.TP] = pos[MR.VS]/2 - pos[MR.VP]
+    fpos[MR.VP] = pos[MR.VP]
+    fpos[MR.VS] = pos[MR.VS]
+    if badin(MR.BT) or badin(MR.TP) :
+      return None
+
+  if MR.LF in pos or MR.RT in pos :
+    if MR.LF not in pos or MR.RT not in pos :
+      return None
+    fpos[MR.RT] = pos[MR.RT]
+    fpos[MR.LF] = pos[MR.LF]
+    fpos[MR.HP] = pos[MR.RT]/2 - pos[MR.LF]/2
+    fpos[MR.HS] = pos[MR.RT] + pos[MR.LF]
+    if badin(MR.HP) or badin(MR.HS) :
+      return None
+
+  if MR.HP in pos or MR.HS in pos :
+    if MR.HP not in pos or MR.HS not in pos :
+      return None
+    fpos[MR.RT] = pos[MR.HS]/2 + pos[MR.HP]
+    fpos[MR.LF] = pos[MR.HS]/2 - pos[MR.HP]
+    fpos[MR.HP] = pos[MR.HP]
+    fpos[MR.HS] = pos[MR.HS]
+    if badin(MR.RT) or badin(MR.LF) :
+      return None
+
+  return fpos
+
+
+def pos2rct(pos) :
+  pos = pos2pos(pos)
+  return QRectF(pos[MR.HP] - pos[MR.HS]/2,
+                pos[MR.VP] - pos[MR.VS]/2,
+                pos[MR.HS],
+                pos[MR.VS])
+
+def rct2pos(rct) :
+  return {MR.BT : -rct.top(),
+          MR.TP :  rct.bottom(),
+          MR.LF : -rct.left(),
+          MR.RT :  rct.right(),
+          MR.HS :  rct.width(),
+          MR.HP :  rct.center().x(),
+          MR.VS :  rct.height(),
+          MR.VP :  rct.center().y()}
+
 
 
 class Face(QWidget):
@@ -102,7 +170,7 @@ class SlitsVis(QWidget) :
     painter.drawLine(QtCore.QLineF(0,-fh2,0,fh2))
 
     # destination geometry
-    geom = self.parent().rectGLV(True) if self.parent().isMoving else self.parent().rectDRV(True)
+    geom = self.parent().rectGLV() if self.parent().isMoving else self.parent().rectDRV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38)), 0))
     painter.drawRect(geom)
     #def printRect(recf) :
@@ -111,7 +179,7 @@ class SlitsVis(QWidget) :
 
 
     # read back geometry
-    geom = self.parent().rectRBV(True)
+    geom = self.parent().rectRBV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38,50)), 0))
     painter.setBrush(QColor(227,121,38,50))
     painter.drawRect(QRectF(-fw2, geom.bottom() , fw, fh2 - geom.bottom() ) ) # top
@@ -128,6 +196,8 @@ class Slits(QWidget) :
   changedConnection = pyqtSignal(bool)
   changedLimits     = pyqtSignal(bool)
   changedGeometry   = pyqtSignal()
+  willMoveNow       = pyqtSignal(QRectF, dict) #abs and rel
+
 
   def __init__(self, parent):
     super(Slits, self).__init__(parent)
@@ -163,9 +233,9 @@ class Slits(QWidget) :
     self.isConnected = False
     self.isOnLimit = False
     self.motors = {}
-    self.motorsVirtualrectF = QRectF()
+    self.motGeom = QRectF()
     self.drivers = {}
-    for rol in MotoRole :
+    for rol in MR :
       drv = eval('self.ui.d'+rol.name)
       self.drivers[rol] = drv
       drv.vChng.connect(self.synchDrivers)
@@ -210,26 +280,25 @@ class Slits(QWidget) :
     self.onStatusChange()
 
 
+  def setPositions(self, rf):
+    posS = rct2pos(rf)
+    for rol, drv in self.drivers.items() :
+      drv.setPos(self.dist * posS[rol])
+    self.motGeom = self.rectDRV()
+    self.changedGeometry.emit()
+
+
   @pyqtSlot(float)
   def setBase(self, base) :
     self.base = base
     self.onPositionChange()
 
 
-  def setPositions(self, rf, norm=False):
-    posS = self.position(rf, norm=norm)
-    for rol, drv in self.drivers.items() :
-      drv.setPos(posS[rol])
-    if not len(self.motors) :
-      self.motorsVirtualrectF = self.rectDRV(True)
-    self.changedGeometry.emit()
-
-
   @pyqtSlot(float)
   def setDistance(self, dist) :
-    oldDrvs = self.rectDRV(True)
+    oldDrvs = self.rectDRV()
     self.dist = dist
-    self.setPositions(oldDrvs, True)
+    self.setPositions(oldDrvs)
 
 
   @pyqtSlot()
@@ -277,10 +346,29 @@ class Slits(QWidget) :
 
 
   @pyqtSlot()
-  def onMoveOrder(self):
+  def onMoveOrder(self, absORrel=None):
+
+    dest = {} # not normalized
+    if not absORrel: # self-induced motion
+      dest = self.position(self.rectDRV())
+    elif isinstance(absORrel, QRectF): # absolute
+      dest = self.position(absORrel, norm=True)
+    elif isinstance(absORrel, dict): # relative
+      dest.update((rol, pos * self.dist) for rol, pos in absORrel.items())
+    else : # should never happen
+      return
+
+    shft = self.rectRBV(True)
+    shft.update((rol, dest[rol] - pos) for rol, pos in shft.items())
+    self.willMoveNow.emit(dest, shft)
+
+    dest.update((rol, pos * self.dist) for rol, pos in dest.items())
     if not len(self.motors) :
-      self.motorsVirtualrectF = self.rectDRV(True)
-      self.changedGeometry.emit()
+      self.motGeom = dest
+    else :
+      for rol, mot in self.motors.items() :
+        mot.goTo(dest[rol])
+    self.changedGeometry.emit()
 
 
 
@@ -290,108 +378,51 @@ class Slits(QWidget) :
     drv = self.sender()
     if drv not in self.drivers.values() :
       return
+
     rol = [rl for rl,dr in self.drivers.items() if dr == drv][0]
+    if   rol == MR.BT or rol == MR.TP:
+      tp, bt = self.drivers[MR.TP].pos(), self.drivers[MR.BT].pos()
+      self.drivers[MR.VS].setPos(tp + bt, True)
+      self.drivers[MR.VP].setPos(tp/2 - bt/2, True)
+    elif rol == MR.VS or rol == MR.VP:
+      vs, vp = self.drivers[MR.VS].pos(), self.drivers[MR.VP].pos()
+      self.drivers[MR.TP].setPos(vs/2 + vp, True)
+      self.drivers[MR.BT].setPos(vs/2 - vp, True)
+    elif rol == MR.LF or rol == MR.RT:
+      lf, rt = self.drivers[MR.LF].pos(), self.drivers[MR.RT].pos()
+      self.drivers[MR.HS].setPos(rt+lf, True)
+      self.drivers[MR.HP].setPos(rt/2 - lf/2, True)
+    elif rol == MR.HS or rol == MR.HP:
+      hs, hp = self.drivers[MR.HS].pos(), self.drivers[MR.HP].pos()
+      self.drivers[MR.RT].setPos(hs/2 + hp, True)
+      self.drivers[MR.LF].setPos(hs/2 - hp, True)
 
-    if   rol == MotoRole.BT or rol == MotoRole.TP:
-      tp, bt = self.drivers[MotoRole.TP].pos(), self.drivers[MotoRole.BT].pos()
-      self.drivers[MotoRole.VS].setPos(tp + bt, True)
-      self.drivers[MotoRole.VP].setPos(tp/2 - bt/2, True)
-    elif rol == MotoRole.VS or rol == MotoRole.VP:
-      vs, vp = self.drivers[MotoRole.VS].pos(), self.drivers[MotoRole.VP].pos()
-      self.drivers[MotoRole.TP].setPos(vs/2 + vp, True)
-      self.drivers[MotoRole.BT].setPos(vs/2 - vp, True)
-    elif rol == MotoRole.LF or rol == MotoRole.RT:
-      lf, rt = self.drivers[MotoRole.LF].pos(), self.drivers[MotoRole.RT].pos()
-      self.drivers[MotoRole.HS].setPos(rt+lf, True)
-      self.drivers[MotoRole.HP].setPos(rt/2 - lf/2, True)
-    elif rol == MotoRole.HS or rol == MotoRole.HP:
-      hs, hp = self.drivers[MotoRole.HS].pos(), self.drivers[MotoRole.HP].pos()
-      self.drivers[MotoRole.RT].setPos(hs/2 + hp, True)
-      self.drivers[MotoRole.LF].setPos(hs/2 - hp, True)
-
-    #if not len(self.motors) :
-    #  self.motorsVirtualrectF = self.rectDRV(True)
     self.changedGeometry.emit()
 
 
-  def _motorsRectF(self, rbv=True, norm=False) :
-
+  def _motorsRectF(self, rbv=True) :
     if not len(self.motors) :
-      return self.motorsVirtualrectF * (1 if norm else self.dist)
-
-    hp = hs = vp = vs = 0
+      return self.motGeom
+    pos = {}
     for rol, mot in self.motors.items() :
-      pos = mot.getUserPosition() if rbv else mot.getUserGoal()
-      if   rol is MotoRole.BT :
-        tpo = vs/2 + vp
-        vp = (tpo - pos)/2 - self.base
-        vs = tpo + pos
-      elif rol is MotoRole.TP :
-        bto = vs/2 - vp
-        vp = (pos - bto) / 2 - self.base
-        vs = pos + bto
-      elif rol is MotoRole.LF :
-        rto = hs/2 + hp
-        hp = (rto - pos)/2
-        hs = rto + pos
-      elif rol is MotoRole.RT :
-        lfo = hs/2 - hp
-        hp = (pos - lfo) / 2
-        hs = pos + lfo
-      elif rol is MotoRole.HS :
-        hs = pos
-      elif rol is MotoRole.HP :
-        hp = pos
-      elif rol is MotoRole.VS :
-        vs = pos
-      elif rol is MotoRole.VP :
-        vp = pos - self.base
-    return QRectF(hp-hs/2, vp-vs/2, hs, vs) / (self.dist if norm else 1)
+      ps = mot.getUserPosition() if rbv else mot.getUserGoal()
+      pos[rol] = ps
+      if rol in (MR.BT, MR.TP, MR.VP) :
+        pos[rol] -= self.base
+    return pos2rct(pos)/self.dist
 
 
-  def rectRBV(self, norm=False) :
-    return self._motorsRectF(True, norm)
+  def rectRBV(self) :
+    return self._motorsRectF(True)
 
 
-  def rectGLV(self, norm=False) :
-    return self._motorsRectF(False, norm)
+  def rectGLV(self) :
+    return self._motorsRectF(False)
 
 
-  def rectDRV(self, norm=False) :
-    return QRectF(-self.drivers[MotoRole.LF].pos(), -self.drivers[MotoRole.BT].pos(),
-                   self.drivers[MotoRole.HS].pos(),  self.drivers[MotoRole.VS].pos()) \
-                     / (self.dist if norm else 1)
-
-
-  def position(self, rf, rol=None, norm=False) :
-
-    ret = 0
-
-    if rol is None :
-
-      positions = {}
-      for rl in MotoRole :
-        positions[rl] = self.position(rf, rl, norm)
-      return positions
-
-    elif rol is MotoRole.BT :
-      ret = -rf.top()
-    elif rol is MotoRole.TP :
-      ret = rf.bottom()
-    elif rol is MotoRole.LF :
-      ret = -rf.left()
-    elif rol is MotoRole.RT :
-      ret = rf.right()
-    elif rol is MotoRole.HS :
-      ret = rf.width()
-    elif rol is MotoRole.HP :
-      ret = rf.center().x()
-    elif rol is MotoRole.VS :
-      ret = rf.height()
-    elif rol is MotoRole.VP :
-      ret = rf.center().y()
-
-    return ret * (self.dist if norm else 1)
+  def rectDRV(self) :
+    pos = { rol : drv.pos() for rol, drv in self.drivers.items() }
+    return pos2rct(pos)/self.dist
 
 
 
