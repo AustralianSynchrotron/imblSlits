@@ -280,6 +280,31 @@ class Slits(QWidget) :
     self.onStatusChange()
 
 
+  def _motorsRectF(self, rbv=True) :
+    if not len(self.motors) :
+      return self.motGeom
+    pos = {}
+    for rol, mot in self.motors.items() :
+      ps = mot.getUserPosition() if rbv else mot.getUserGoal()
+      pos[rol] = ps
+      if rol in (MR.BT, MR.TP, MR.VP) :
+        pos[rol] -= self.base
+    return pos2rct(pos)/self.dist
+
+
+  def rectRBV(self) :
+    return self._motorsRectF(True)
+
+
+  def rectGLV(self) :
+    return self._motorsRectF(False)
+
+
+  def rectDRV(self) :
+    pos = { rol : drv.pos() for rol, drv in self.drivers.items() }
+    return pos2rct(pos)/self.dist
+
+
   def setPositions(self, rf):
     posS = rct2pos(rf)
     for rol, drv in self.drivers.items() :
@@ -348,26 +373,25 @@ class Slits(QWidget) :
   @pyqtSlot()
   def onMoveOrder(self, absORrel=None):
 
-    dest = {} # not normalized
+    orig = rct2pos(self.rectRBV())
+    dest = {}
     if not absORrel: # self-induced motion
-      dest = self.position(self.rectDRV())
+      dest = rct2pos(self.rectDRV())
     elif isinstance(absORrel, QRectF): # absolute
-      dest = self.position(absORrel, norm=True)
+      dest = rct2pos(absORrel)
     elif isinstance(absORrel, dict): # relative
-      dest.update((rol, pos * self.dist) for rol, pos in absORrel.items())
+      dest = { rol : orig[rol] + absORrel[rol] for rol in MR }
     else : # should never happen
       return
 
-    shft = self.rectRBV(True)
-    shft.update((rol, dest[rol] - pos) for rol, pos in shft.items())
-    self.willMoveNow.emit(dest, shft)
+    shft = { rol : dest[rol] - orig[rol] for rol in MR }
+    self.willMoveNow.emit(pos2rct(dest), shft)
 
-    dest.update((rol, pos * self.dist) for rol, pos in dest.items())
     if not len(self.motors) :
-      self.motGeom = dest
+      self.motGeom = pos2rct(dest)
     else :
       for rol, mot in self.motors.items() :
-        mot.goTo(dest[rol])
+        mot.goUserPosition(dest[rol])
     self.changedGeometry.emit()
 
 
@@ -400,29 +424,7 @@ class Slits(QWidget) :
     self.changedGeometry.emit()
 
 
-  def _motorsRectF(self, rbv=True) :
-    if not len(self.motors) :
-      return self.motGeom
-    pos = {}
-    for rol, mot in self.motors.items() :
-      ps = mot.getUserPosition() if rbv else mot.getUserGoal()
-      pos[rol] = ps
-      if rol in (MR.BT, MR.TP, MR.VP) :
-        pos[rol] -= self.base
-    return pos2rct(pos)/self.dist
 
-
-  def rectRBV(self) :
-    return self._motorsRectF(True)
-
-
-  def rectGLV(self) :
-    return self._motorsRectF(False)
-
-
-  def rectDRV(self) :
-    pos = { rol : drv.pos() for rol, drv in self.drivers.items() }
-    return pos2rct(pos)/self.dist
 
 
 

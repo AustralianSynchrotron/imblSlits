@@ -98,14 +98,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
     super(MainWindow, self).__init__()
     self.ui = loadUi(sharePath + 'imblSlitsMainWindow.ui', self)
-    #self.ui = ui_slits.Ui_MainWindow()
-    #self.ui.setupUi(self)
+    self.ui.famWidget.hide()
+
+    self.bears  = {}
+    self.synbts = {}
+    for nslt in self.slitNames.keys() :
+      self.bears[nslt] = eval('self.ui.'+nslt+'Bear')
+      self.synbts[nslt] = eval('self.ui.'+nslt+'Synch')
 
     self.ui.mashaBear.face.set(sharePath+'masha.png', 'Detector')
     for nslt, desc in self.slitNames.items() :
-      eval('self.ui.'+nslt+'Bear').face.set(sharePath+nslt+'.png', desc)
-      eval('self.ui.'+nslt+'Synch').setText(desc)
-      eval('self.ui.'+nslt+'Synch').setIcon(QtGui.QIcon(sharePath+nslt+'.png'))
+      self.bears[nslt].face.set(sharePath+nslt+'.png', desc)
+      self.synbts[nslt].setText(desc)
+      self.synbts[nslt].setIcon(QtGui.QIcon(sharePath+nslt+'.png'))
 
     tab = self.ui.tabWidget.tabBar()
     tab.setExpanding(True)
@@ -113,12 +118,6 @@ class MainWindow(QtWidgets.QMainWindow):
       slt = self.ui.tabWidget.widget(itab).findChild(Slits)
       slt.layFaceTab.layout().addWidget(slt.face)
       tab.setTabButton(itab,  QtWidgets.QTabBar.LeftSide, slt.layFaceTab)
-
-
-    #w = self.ui.tabWidget.tabBar().width()
-    #tab = self.ui.tabWidget.setIconSize(QtCore.QSize(w,w))
-    self.ui.famWidget.hide()
-
 
     self.ui.pandaBear.setDistance(14)
     self.ui.pandaBear.setMotors( {MR.VP : 'SR08ID01SLW01:VPOS',
@@ -213,21 +212,21 @@ class MainWindow(QtWidgets.QMainWindow):
   def distancePicked(self):
     sndtxt = self.sender().text().replace('&','')
     nslt = [ns for ns,desc in self.slitNames.items() if sndtxt == desc][0]
-    self.ui.distance.setValue(eval('self.ui.'+nslt+'Bear').dist)
+    self.ui.distance.setValue(self.bears[nslt].dist)
 
 
   @pyqtSlot()
   def synchPicked(self):
     sndtxt = self.sender().text().replace('&','')
     recf = QtCore.QRectF()
-    nsltL = [ns for ns,desc in self.slitNames.items() if sndtxt == desc]
-    if len(nsltL) :
-      recf = eval('self.ui.'+nsltL[0]+'Bear').rectDRV()
+    bearL = [self.bears[ns] for ns,desc in self.slitNames.items() if sndtxt == desc]
+    if len(bearL) :
+      recf = bearL[0].rectDRV()
     else:
       recfS = []
       for nslt in self.slitNames.keys() :
-        if eval('self.ui.'+nslt+'Synch').isChecked() :
-          recfS.append(eval('self.ui.'+nslt+'Bear').rectDRV())
+        if self.synbts[nslt].isChecked() :
+          recfS.append(self.bears[nslt].rectDRV())
       if not len(recfS) :
         return
       elif 'any' in sndtxt :
@@ -262,9 +261,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
   @pyqtSlot(QRectF, dict)
   def onMashaMove(self, abs, rel) :
-    for rol, shft in rel.items() :
-      print(rol.name, shft)
-    print(abs, '\n')
+    for nslt in self.slitNames.keys() :
+      if self.synbts[nslt].isChecked() :
+        self.bears[nslt].onMoveOrder(rel)
 
 
 
