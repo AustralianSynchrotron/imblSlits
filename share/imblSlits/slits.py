@@ -12,17 +12,6 @@ filePath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 from driver import Driver
 
 
-
-class QRectF(QtCore.QRectF) :
-  def __mul__(self,flt):
-    return QRectF(self.x()*flt, self.y()*flt, self.width()*flt, self.height()*flt)
-  __rmul__ = __mul__
-  def __truediv__(self,flt):
-    return QRectF(self.x()/flt, self.y()/flt, self.width()/flt, self.height()/flt)
-  def __str__(self):
-    return "%f x %f %+f %+f" % (self.width(), self.height(), self.center().x(), self.center().y() )
-
-
 class MR(Enum) :
   HP = auto()
   VP = auto()
@@ -35,73 +24,35 @@ class MR(Enum) :
 
 
 
-def pos2pos(pos, strict=False) :
+def posFill(pos) :
 
-  fpos = {}
-
-  def badin(rol) :
-    return rol in pos and pos[rol] != fpos[rol] and strict
-
-  if MR.BT in pos or MR.TP in pos :
-    if MR.BT not in pos or MR.TP not in pos :
-      return None
-    fpos[MR.BT] = pos[MR.BT]
-    fpos[MR.TP] = pos[MR.TP]
-    fpos[MR.VP] = pos[MR.TP]/2 - pos[MR.BT]/2
-    fpos[MR.VS] = pos[MR.TP] + pos[MR.BT]
-    if badin(MR.VP) or badin(MR.VS) :
-      return None
-
-  if MR.VP in pos or MR.VS in pos :
+  if   MR.VP     in pos or MR.VS     in pos :
     if MR.VP not in pos or MR.VS not in pos :
-      return None
-    fpos[MR.BT] = pos[MR.VS]/2 + pos[MR.VP]
-    fpos[MR.TP] = pos[MR.VS]/2 - pos[MR.VP]
-    fpos[MR.VP] = pos[MR.VP]
-    fpos[MR.VS] = pos[MR.VS]
-    if badin(MR.BT) or badin(MR.TP) :
-      return None
+      return False
+    pos[MR.BT] = pos[MR.VS]/2 + pos[MR.VP]
+    pos[MR.TP] = pos[MR.VS]/2 - pos[MR.VP]
+  elif MR.BT     in pos or MR.TP     in pos :
+    if MR.BT not in pos or MR.TP not in pos :
+      return False
+    pos[MR.VP] = pos[MR.TP]/2 - pos[MR.BT]/2
+    pos[MR.VS] = pos[MR.TP]   + pos[MR.BT]
 
-  if MR.LF in pos or MR.RT in pos :
-    if MR.LF not in pos or MR.RT not in pos :
-      return None
-    fpos[MR.RT] = pos[MR.RT]
-    fpos[MR.LF] = pos[MR.LF]
-    fpos[MR.HP] = pos[MR.RT]/2 - pos[MR.LF]/2
-    fpos[MR.HS] = pos[MR.RT] + pos[MR.LF]
-    if badin(MR.HP) or badin(MR.HS) :
-      return None
-
-  if MR.HP in pos or MR.HS in pos :
+  if   MR.HP     in pos or MR.HS     in pos :
     if MR.HP not in pos or MR.HS not in pos :
-      return None
-    fpos[MR.RT] = pos[MR.HS]/2 + pos[MR.HP]
-    fpos[MR.LF] = pos[MR.HS]/2 - pos[MR.HP]
-    fpos[MR.HP] = pos[MR.HP]
-    fpos[MR.HS] = pos[MR.HS]
-    if badin(MR.RT) or badin(MR.LF) :
-      return None
+      return False
+    pos[MR.RT] = pos[MR.HS]/2 + pos[MR.HP]
+    pos[MR.LF] = pos[MR.HS]/2 - pos[MR.HP]
+  elif MR.LF     in pos or MR.RT     in pos :
+    if MR.LF not in pos or MR.RT not in pos :
+      return False
+    pos[MR.HP] = pos[MR.RT]/2 - pos[MR.LF]/2
+    pos[MR.HS] = pos[MR.RT] + pos[MR.LF]
+  return True
 
-  return fpos
 
-
-def pos2rct(pos) :
-  pos = pos2pos(pos)
-  return QRectF(pos[MR.HP] - pos[MR.HS]/2,
-                pos[MR.VP] - pos[MR.VS]/2,
-                pos[MR.HS],
-                pos[MR.VS])
-
-def rct2pos(rct) :
-  return {MR.BT : -rct.top(),
-          MR.TP :  rct.bottom(),
-          MR.LF : -rct.left(),
-          MR.RT :  rct.right(),
-          MR.HS :  rct.width(),
-          MR.HP :  rct.center().x(),
-          MR.VS :  rct.height(),
-          MR.VP :  rct.center().y()}
-
+def pos2pos(pos) :
+  fpos = pos.copy()
+  return fpos if posFill(fpos) else None
 
 
 class Face(QWidget):
@@ -130,6 +81,8 @@ class SlitsVis(QWidget) :
 
   beamVw = 4.85714
   beamVh = 0.28571
+
+  heightChanged = pyqtSignal(int)
 
   def __init__(self, parent):
 
@@ -170,22 +123,20 @@ class SlitsVis(QWidget) :
     painter.drawLine(QtCore.QLineF(0,-fh2,0,fh2))
 
     # destination geometry
-    geom = self.parent().rectGLV() if self.parent().isMoving else self.parent().rectDRV()
+    pos = self.parent().posGLV() if self.parent().isMoving else self.parent().posDRV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38)), 0))
-    painter.drawRect(geom)
-    #def printRect(recf) :
-    #  print("%f x %f %+f %+f" % (recf.width(), recf.height(),
-    #                             recf.center().x(), recf.center().y() ) )
-
+    painter.drawRect(QtCore.QRectF(-pos[MR.LF], -pos[MR.BT], pos[MR.HS], pos[MR.VS]))
 
     # read back geometry
-    geom = self.parent().rectRBV()
+    pos = self.parent().posRBV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38,50)), 0))
     painter.setBrush(QColor(227,121,38,50))
-    painter.drawRect(QRectF(-fw2, geom.bottom() , fw, fh2 - geom.bottom() ) ) # top
-    painter.drawRect(QRectF(-fw2, geom.top(), fw, geom.top() - fh2 ) ) # bot
-    painter.drawRect(QRectF(-fw2, -fh2, fw2 + geom.left(), fh ) ) # left
-    painter.drawRect(QRectF( fw2, -fh2, geom.right() - fw2, fh ) ) # right
+    painter.drawRect(QtCore.QRectF(-fw2,  fh2, fw, pos[MR.TP] - fh2)) # top
+    painter.drawRect(QtCore.QRectF(-fw2, -fh2, fw, fh2 - pos[MR.BT])) # bot
+    painter.drawRect(QtCore.QRectF(-fw2, -fh2, fw2 - pos[MR.LF], fh)) # left
+    painter.drawRect(QtCore.QRectF( fw2, -fh2, pos[MR.RT] - fw2, fh)) # right
+
+    self.heightChanged.emit(self.height())
 
 
 class Slits(QWidget) :
@@ -196,7 +147,7 @@ class Slits(QWidget) :
   changedConnection = pyqtSignal(bool)
   changedLimits     = pyqtSignal(bool)
   changedGeometry   = pyqtSignal()
-  willMoveNow       = pyqtSignal(QRectF, dict) #abs and rel
+  willMoveNow       = pyqtSignal(dict, dict) # from, to
 
 
   def __init__(self, parent):
@@ -233,7 +184,7 @@ class Slits(QWidget) :
     self.isConnected = False
     self.isOnLimit = False
     self.motors = {}
-    self.motGeom = QRectF()
+    self.motGeom = {rol : 0 for rol in MR}
     self.drivers = {}
     for rol in MR :
       drv = eval('self.ui.d'+rol.name)
@@ -280,36 +231,36 @@ class Slits(QWidget) :
     self.onStatusChange()
 
 
-  def _motorsRectF(self, rbv=True) :
+  def _motorsPos(self, rbv=True) :
     if not len(self.motors) :
       return self.motGeom
     pos = {}
     for rol, mot in self.motors.items() :
       ps = mot.getUserPosition() if rbv else mot.getUserGoal()
-      pos[rol] = ps
+      pos[rol] = ps/self.dist
       if rol in (MR.BT, MR.TP, MR.VP) :
-        pos[rol] -= self.base
-    return pos2rct(pos)/self.dist
+        pos[rol] -= self.base/self.dist
+    posFill(pos)
+    return pos
 
 
-  def rectRBV(self) :
-    return self._motorsRectF(True)
+  def posRBV(self) :
+    return self._motorsPos(True)
 
 
-  def rectGLV(self) :
-    return self._motorsRectF(False)
+  def posGLV(self) :
+    return self._motorsPos(False)
 
 
-  def rectDRV(self) :
-    pos = { rol : drv.pos() for rol, drv in self.drivers.items() }
-    return pos2rct(pos)/self.dist
+  def posDRV(self) :
+    return { rol : drv.pos()/self.dist for rol, drv in self.drivers.items() }
 
 
-  def setPositions(self, rf):
-    posS = rct2pos(rf)
+  def setPos(self, pos):
+    posFill(pos)
     for rol, drv in self.drivers.items() :
-      drv.setPos(self.dist * posS[rol])
-    self.motGeom = self.rectDRV()
+      drv.setPos(self.dist * pos[rol])
+    self.motGeom = self.posDRV()
     self.changedGeometry.emit()
 
 
@@ -321,15 +272,15 @@ class Slits(QWidget) :
 
   @pyqtSlot(float)
   def setDistance(self, dist) :
-    oldDrvs = self.rectDRV()
+    oldDrvs = self.posDRV()
     self.dist = dist
-    self.setPositions(oldDrvs)
+    self.setPos(oldDrvs)
 
 
   @pyqtSlot()
   def onPositionChange(self):
-    drvP = self.rectRBV() if self.isMoving else self.rectGLV()
-    self.setPositions(drvP)
+    drvP = self.posRBV() if self.isMoving else self.posGLV()
+    self.setPos(drvP)
 
 
   @pyqtSlot()
@@ -371,29 +322,19 @@ class Slits(QWidget) :
 
 
   @pyqtSlot()
-  def onMoveOrder(self, absORrel=None):
-
-    orig = rct2pos(self.rectRBV())
-    dest = {}
-    if not absORrel: # self-induced motion
-      dest = rct2pos(self.rectDRV())
-    elif isinstance(absORrel, QRectF): # absolute
-      dest = rct2pos(absORrel)
-    elif isinstance(absORrel, dict): # relative
-      dest = { rol : orig[rol] + absORrel[rol] for rol in MR }
-    else : # should never happen
-      return
-
-    shft = { rol : dest[rol] - orig[rol] for rol in MR }
-    self.willMoveNow.emit(pos2rct(dest), shft)
-
+  def onMoveOrder(self, dest=None):
+    orig = self.posRBV()
+    if dest is None :
+      dest = self.posDRV()
+    else :
+      posFill(dest)
+    self.willMoveNow.emit(orig, dest)
     if not len(self.motors) :
-      self.motGeom = pos2rct(dest)
+      self.motGeom = dest
     else :
       for rol, mot in self.motors.items() :
-        mot.goUserPosition(dest[rol])
+        mot.goUserPosition(dest[rol]*self.dist)
     self.changedGeometry.emit()
-
 
 
   @pyqtSlot()
