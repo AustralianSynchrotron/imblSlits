@@ -313,6 +313,12 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>Face</class>
+   <extends>QWidget</extends>
+   <header location="global">slits.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>Driver</class>
    <extends>QWidget</extends>
    <header location="global">driver.h</header>
@@ -326,12 +332,6 @@
   </customwidget>
   <customwidget>
    <class>SlitsVis</class>
-   <extends>QWidget</extends>
-   <header location="global">slits.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>Face</class>
    <extends>QWidget</extends>
    <header location="global">slits.h</header>
    <container>1</container>
