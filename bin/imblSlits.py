@@ -230,6 +230,7 @@ class MainWindow(QtWidgets.QMainWindow):
     for slt in self.ui.findChildren(Slits) :
       eval('slt.layFace'+wslt).layout().addWidget(slt.face)
 
+    self.ui.fakeSlitsVis.setVisible(not toTab)
     self.ui.layXrayFaceFam.setVisible(not toTab)
     eval('self.ui.layXrayFace'+wslt).layout().addWidget(self.ui.xrayFace)
     eval('self.ui.layXrayFace'+wslt).setMinimumSize(self.ui.xrayFace.minimumSize())
