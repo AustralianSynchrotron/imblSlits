@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
-import sys, os
+import sys
+import os
+from enum import Enum
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.uic import loadUi
-from enum import Enum
+from PyQt5.QtWidgets import *
 import epics
 
 binPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 sharePath = binPath + "../share/imblSlits/"
 sys.path.append(sharePath)
+
 from slits import Slits, MR, Face
 
 
@@ -38,11 +41,13 @@ class BLmode(QObject):
 
   updated = pyqtSignal(str)
 
+
   def __init__(self):
     super(BLmode, self).__init__()
+
     def onUpdate(**kw):
-      #self.updated.emit(self.encl().value+'-'+self.shut().value)
-      self.updated.emit(self.Encl.MOD3.value+'-'+self.Shut.MONO.value)
+      # self.updated.emit(self.Encl.MOD3.value+'-'+self.Shut.MONO.value)
+      self.updated.emit(self.encl().value+'-'+self.shut().value)
     self.m1PV.add_callback(onUpdate)
     self.m2PV.add_callback(onUpdate)
     self.m3PV.add_callback(onUpdate)
@@ -50,35 +55,36 @@ class BLmode(QObject):
     self.monoPV.add_callback(onUpdate)
     self.mrtsPV.add_callback(onUpdate)
 
+
   def encl(self):
-    if self.m3PV.value :
+    if self.m3PV.value:
       return self.Encl.MOD3
-    elif self.m2PV.value :
+    elif self.m2PV.value:
       return self.Encl.MOD2
-    elif self.m1PV.value :
+    elif self.m1PV.value:
       return self.Encl.MOD1
-    else :
+    else:
       return self.Encl.NONE
 
+
   def shut(self):
-    if self.pinkPV.value == None or self.monoPV.value == None or self.mrtsPV.value == None \
-       or 1 != self.pinkPV.value + self.monoPV.value + self.mrtsPV.value :
+    if self.pinkPV.value is None or \
+       self.monoPV.value is None or \
+       self.mrtsPV.value is None or \
+       1 != self.pinkPV.value + self.monoPV.value + self.mrtsPV.value:
       return self.Shut.NONE
-    elif self.pinkPV.value :
+    elif self.pinkPV.value:
       return self.Shut.PINK
-    elif self.monoPV.value :
+    elif self.monoPV.value:
       return self.Shut.MONO
-    elif self.mrtsPV.value :
+    elif self.mrtsPV.value:
       return self.Shut.MRTS
-    else :
+    else:
       return self.Shut.NONE
 
 
 
-
-
-
-class MainWindow(QtWidgets.QMainWindow):
+class MainWindow(QMainWindow):
 
   blMode = BLmode()
   slitNames = {'panda': 'HHLS',
@@ -90,25 +96,25 @@ class MainWindow(QtWidgets.QMainWindow):
   def __init__(self):
 
     super(MainWindow, self).__init__()
-    self.ui = loadUi(sharePath + 'imblSlitsMainWindow.ui', self)
+    self.ui = loadUi(sharePath + 'imblSlits.ui', self)
     self.uiModeSwap(True)
     self.toggleConfigShow()
 
-    self.bears  = {}
+    self.bears = {}
     self.synbts = {}
-    for nslt in self.slitNames.keys() :
+    for nslt in self.slitNames.keys():
       self.bears[nslt] = eval('self.ui.'+nslt+'Bear')
       self.synbts[nslt] = eval('self.ui.'+nslt+'Synch')
 
-    for nslt, desc in self.slitNames.items() :
+    for nslt, desc in self.slitNames.items():
       self.bears[nslt].face.set(sharePath+nslt+'.png', desc)
       self.synbts[nslt].setText(desc)
       self.synbts[nslt].setIcon(QtGui.QIcon(sharePath+nslt+'.png'))
     self.ui.mashaBear.face.set(sharePath+'masha.png', 'Detector')
     self.ui.xrayFace.set(sharePath+'xray.png', 'Config')
     self.ui.xrayFace.setMinimumSize(self.ui.mashaBear.face.minimumSize())
-    self.ui.mashaBear.visual.heightChanged.connect(self.ui.fakeSlitsVis.setMinimumHeight)
-
+    self.ui.mashaBear.visual.heightChanged.connect(
+      self.ui.fakeSlitsVis.setMinimumHeight)
 
     tab = self.ui.tabWidget.tabBar()
     tab.setExpanding(True)
@@ -116,62 +122,63 @@ class MainWindow(QtWidgets.QMainWindow):
       slt = self.ui.tabWidget.widget(itab).findChild(Slits)
       if slt:
         slt.layFaceTab.layout().addWidget(slt.face)
-        tab.setTabButton(itab,  QtWidgets.QTabBar.LeftSide, slt.layFaceTab)
+        tab.setTabButton(itab,  QTabBar.LeftSide, slt.layFaceTab)
 
     self.ui.pandaBear.setDistance(14)
-    self.ui.pandaBear.setMotors( {MR.VP : 'SR08ID01SLW01:VPOS',
-                                  MR.VS : 'SR08ID01SLW01:VOPEN',
-                                  MR.LF : 'SR08ID01SLW01:RIGHT', # left/right are swapped
-                                  MR.RT : 'SR08ID01SLW01:LEFT'} )
+    self.ui.pandaBear.setMotors({MR.VP : 'SR08ID01SLW01:VPOS',
+                                 MR.VS : 'SR08ID01SLW01:VOPEN',
+                                 MR.LF : 'SR08ID01SLW01:RIGHT', # left/right are swapped
+                                 MR.RT : 'SR08ID01SLW01:LEFT'})
 
-    self.ui.babyBear.setDistance(20)
-    self.ui.babyBear.setMotors(  {MR.VP : 'SR08ID01SLM12:VCENTRE',
-                                  MR.VS : 'SR08ID01SLM12:VSIZE',
-                                  MR.HP : 'SR08ID01SLM12:HCENTRE',
-                                  MR.HS : 'SR08ID01SLM12:HSIZE'} )
-                                  #MR.LF : 'SR08ID01SLM12:IN',
-                                  #MR.RT : 'SR08ID01SLM12:OUT',
-                                  #MR.BT : 'SR08ID01SLM12:BOT',
-                                  #MR.TP : 'SR08ID01SLM12:TOP'} )
+    self.ui. babyBear.setDistance(20)
+    self.ui. babyBear.setMotors({MR.VP : 'SR08ID01SLM12:VCENTRE',
+                                 MR.VS : 'SR08ID01SLM12:VSIZE',
+                                 MR.HP : 'SR08ID01SLM12:HCENTRE',
+                                 MR.HS : 'SR08ID01SLM12:HSIZE'})
+                                 #MR.LF : 'SR08ID01SLM12:IN',
+                                 #MR.RT : 'SR08ID01SLM12:OUT',
+                                 #MR.BT : 'SR08ID01SLM12:BOT',
+                                 #MR.TP : 'SR08ID01SLM12:TOP'} )
 
-    self.ui.mamaBear.setDistance(31)
-    self.ui.mamaBear.setMotors(  {MR.VP : 'SR08ID01SLM21:Z',
-                                  MR.VS : 'SR08ID01SLM21:ZGAP',
-                                  MR.HP : 'SR08ID01SLM21:Y',
-                                  MR.HS : 'SR08ID01SLM21:YGAP'} )
+    self.ui. mamaBear.setDistance(31)
+    self.ui. mamaBear.setMotors({MR.VP : 'SR08ID01SLM21:Z',
+                                 MR.VS : 'SR08ID01SLM21:ZGAP',
+                                 MR.HP : 'SR08ID01SLM21:Y',
+                                 MR.HS : 'SR08ID01SLM21:YGAP'})
 
     self.ui.papaBear.setDistance(136)
     self.ui.papaBear.setMotors(  {MR.VP : 'SR08ID01SLM03:ZCENTRE',
                                   MR.VS : 'SR08ID01SLM03:ZGAP',
                                   MR.HP : 'SR08ID01SLM03:YCENTRE',
-                                  MR.HS : 'SR08ID01SLM03:YGAP'} )
+                                  MR.HS : 'SR08ID01SLM03:YGAP'})
 
-
-    showcfg = QtWidgets.QPushButton('Show config', self)
+    showcfg = QPushButton('Show config', self)
     showcfg.clicked.connect(self.toggleConfigShow)
-    self.ui.statusbar.addPermanentWidget(showcfg);
-    self.ui.statusbar.addPermanentWidget(QtWidgets.QWidget(), 1)
+    self.ui.statusbar.addPermanentWidget(showcfg)
+    self.ui.statusbar.addPermanentWidget(QWidget(), 1)
 
-    self.ui.statusbar.addPermanentWidget(QtWidgets.QLabel('Beamline mode: ', self))
-    modeLabel = QtWidgets.QLabel('...', self)
+    self.ui.statusbar.addPermanentWidget(QLabel('Beamline mode: ', self))
+    modeLabel = QLabel('...', self)
     self.blMode.updated.connect(modeLabel.setText)
     self.ui.statusbar.addPermanentWidget(modeLabel)
 
-    distances = QtWidgets.QMenu(self)
-    for nslt, desc in self.slitNames.items() :
-      distances.addAction(QtGui.QIcon(sharePath+nslt+'.png'), desc, self.distancePicked)
+    distances = QMenu(self)
+    for nslt, desc in self.slitNames.items():
+      distances.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
+                          desc, self.distancePicked)
     self.ui.distances.setMenu(distances)
     self.ui.distance.valueChanged.connect(self.ui.mashaBear.setDistance)
 
-    synchs = QtWidgets.QMenu(self)
+    synchs = QMenu(self)
     synchs.addAction('Seen in any', self.synchPicked)
     synchs.addAction('Seen in all', self.synchPicked)
-    for nslt, desc in self.slitNames.items() :
-      synchs.addAction(QtGui.QIcon(sharePath+nslt+'.png'), desc, self.synchPicked)
+    for nslt, desc in self.slitNames.items():
+      synchs.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
+                       desc, self.synchPicked)
     self.ui.synchMasha.setMenu(synchs)
 
     self.blMode.updated.connect(self.initMasha)
-    for slt in self.ui.findChildren(Slits) :
+    for slt in self.ui.findChildren(Slits):
       slt.changedConnection.connect(self.initMasha)
     self.blMode.updated.connect(self.updateBase)
 
@@ -179,38 +186,46 @@ class MainWindow(QtWidgets.QMainWindow):
     self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
     self.uiModeSwap(True)
 
+    self.ui.save.clicked.connect(self.onSave)
+    self.ui.load.clicked.connect(self.onLoad)
+
     self.ui.mashaBear.willMoveNow.connect(self.onMashaMove)
-
-
+    for slt in self.bears.values():
+      self.ui.mashaBear.ui.stop.clicked.connect(slt.stop.clicked.emit)
+      slt.changedConnection.connect(self.setMashaStatus)
+      slt.changedMotion    .connect(self.setMashaStatus)
+      slt.changedLimits    .connect(self.setMashaStatus)
 
 
   @pyqtSlot()
   def updateBase(self):
-    for slit in self.ui.babyBear, self.ui.papaBear, self.ui.mashaBear :
+    for slit in self.ui.babyBear, self.ui.papaBear, self.ui.mashaBear:
       slit.setBase(20 if self.blMode.shut() == BLmode.Shut.MONO else 0)
+
 
   @pyqtSlot()
   def toggleConfigShow(self):
-    toShow = self.ui.tabWidget.widget(0) is not self.ui.configTab
-    if self.sender() :
+    tbwg = self.ui.tabWidget
+    toShow = tbwg.widget(tbwg.count()-1) is not self.ui.configTab
+    if self.sender():
       self.sender().setText('Hide config' if toShow else 'Show config')
-    if toShow :
-      self.ui.tabWidget.insertTab(0, self.ui.configTab, '')
-      # Have to create and use this new widget as home for self.ui.layXrayFaceTab
-      # instead of using self.ui.layXrayFaceTab itself
+    if toShow:
+      tbwg.addTab(self.ui.configTab, '')
+      # Have to create and use this new widget as home for
+      # self.ui.layXrayFaceTab instead of using it itself
       # because it is always deleted when removing tab - even if reparented
-      layXrayFaceTab = QtWidgets.QWidget()
-      QtWidgets.QVBoxLayout(layXrayFaceTab).setContentsMargins(0, 0, 0, 0)
+      layXrayFaceTab = QWidget()
+      QVBoxLayout(layXrayFaceTab).setContentsMargins(0, 0, 0, 0)
       layXrayFaceTab.layout().addWidget(self.ui.layXrayFaceTab)
-      self.ui.tabWidget.tabBar().setTabButton(
-        0,  QtWidgets.QTabBar.LeftSide, layXrayFaceTab)
-      self.ui.tabWidget.setCurrentWidget(self.ui.configTab)
-    else :
-      self.ui.config.layout().addWidget(self.ui.layXrayFaceTab) # to keep from delete
-      self.ui.tabWidget.removeTab(0)
+      tbwg.tabBar().setTabButton(
+        tbwg.count()-1,  QTabBar.LeftSide, layXrayFaceTab)
+      tbwg.setCurrentWidget(self.ui.configTab)
+    else:
+      self.ui.config.layout().addWidget(self.ui.layXrayFaceTab)  # to keep from delete
+      tbwg.removeTab(tbwg.count()-1)
     self.configFam.setVisible(toShow)
     for i in range(0, 10):
-      QtWidgets.QApplication.processEvents()
+      QApplication.processEvents()
     QtCore.QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
 
@@ -227,76 +242,123 @@ class MainWindow(QtWidgets.QMainWindow):
     eval('self.ui.config'+wslt).layout().addWidget(self.ui.config)
     for nslt in self.slitNames.keys():
       eval('self.ui.'+nslt+wslt).layout().addWidget(eval('self.ui.'+nslt))
-    for slt in self.ui.findChildren(Slits) :
+    for slt in self.ui.findChildren(Slits):
       eval('slt.layFace'+wslt).layout().addWidget(slt.face)
 
     self.ui.fakeSlitsVis.setVisible(not toTab)
     self.ui.layXrayFaceFam.setVisible(not toTab)
-    eval('self.ui.layXrayFace'+wslt).layout().addWidget(self.ui.xrayFace)
-    eval('self.ui.layXrayFace'+wslt).setMinimumSize(self.ui.xrayFace.minimumSize())
+    layXF = eval('self.ui.layXrayFace'+wslt)
+    layXF.layout().addWidget(self.ui.xrayFace)
+    layXF.setMinimumSize(self.ui.xrayFace.minimumSize())
     QtCore.QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
 
   @pyqtSlot()
   def distancePicked(self):
-    sndtxt = self.sender().text().replace('&','')
-    nslt = [ns for ns,desc in self.slitNames.items() if sndtxt == desc][0]
+    sndtxt = self.sender().text().replace('&', '')
+    nslt = [ns for ns, desc in self.slitNames.items() if sndtxt == desc][0]
     self.ui.distance.setValue(self.bears[nslt].dist)
 
 
   @pyqtSlot()
   def synchPicked(self):
-    sndtxt = self.sender().text().replace('&','')
+    sndtxt = self.sender().text().replace('&', '')
     posf = {}
-    bearL = [self.bears[ns] for ns,desc in self.slitNames.items() if sndtxt == desc]
-    if len(bearL) :
+    bearL = [self.bears[ns]
+             for ns, desc in self.slitNames.items() if sndtxt == desc]
+    if len(bearL):
       posf = bearL[0].posDRV()
     else:
       posS = []
-      for nslt in self.slitNames.keys() :
-        if self.synbts[nslt].isChecked() :
+      for nslt in self.slitNames.keys():
+        if self.synbts[nslt].isChecked():
           posS.append(self.bears[nslt].posDRV())
-      if not len(posS) :
+      if not len(posS):
         return
-      elif 'any' in sndtxt :
-        for rol in (MR.LF, MR.RT, MR.TP, MR.BT) :
-          posf[rol] = max( pos[rol] for pos in posS )
-      elif 'all' in sndtxt :
-        for rol in (MR.LF, MR.RT, MR.TP, MR.BT) :
-          posf[rol] = min( pos[rol] for pos in posS )
+      elif 'any' in sndtxt:
+        for rol in (MR.LF, MR.RT, MR.TP, MR.BT):
+          posf[rol] = max(pos[rol] for pos in posS)
+      elif 'all' in sndtxt:
+        for rol in (MR.LF, MR.RT, MR.TP, MR.BT):
+          posf[rol] = min(pos[rol] for pos in posS)
     self.ui.mashaBear.setPos(posf)
 
 
   @pyqtSlot()
-  def initMasha(self) :
-    encl = self.blMode.encl()
+  def initMasha(self):
+
     def execonmod(slt):
       if slt.isConnected:
         self.ui.distance.setValue(slt.dist)
         self.ui.mashaBear.setPos(slt.posDRV())
         self.ui.mashaBear.ui.step.setValue(slt.ui.step.value())
         self.mashainited = True
-    if hasattr(self, 'mashainited') or encl is BLmode.Encl.NONE :
+
+    encl = self.blMode.encl()
+    if hasattr(self, 'mashainited') or encl is BLmode.Encl.NONE:
       return
-    elif encl is BLmode.Encl.MOD1 :
+    elif encl is BLmode.Encl.MOD1:
       execonmod(self.ui.babyBear)
-    elif encl is BLmode.Encl.MOD2 :
+    elif encl is BLmode.Encl.MOD2:
       execonmod(self.ui.mamaBear)
-    elif encl is BLmode.Encl.MOD3 :
+    elif encl is BLmode.Encl.MOD3:
       execonmod(self.ui.papaBear)
 
 
   @pyqtSlot(dict, dict)
-  def onMashaMove(self, orig, dest) :
-    for nslt in self.slitNames.keys() :
-      if self.synbts[nslt].isChecked() :
-        self.bears[nslt].onMoveOrder(dest)
+  def onMashaMove(self, orig, dest):
+    for nslt in self.slitNames.keys():
+      if self.synbts[nslt].isChecked():
+        slt = self.bears[nslt]
+        if self.ui.diveAbs.isChecked():
+          slt.onMoveOrder(dest)
+        else:
+          sorig = slt.posRBV()
+          sdest = {sorig[rol] + dest[rol] - orig[rol] : rol for rol in MR}
+          slt.onMoveOrder(sdest)
+
+
+  @pyqtSlot()
+  def setMashaStatus(self):
+    newConnected = True
+    newMoving = False
+    newLimit = False
+    for slt in self.bears.values():
+      newConnected &= slt.isConnected
+      newMoving |= slt.isMoving
+      newLimit |= slt.isOnLimit
+    self.ui.mashaBear.onStatusChange(newConnected, newMoving, newLimit)
 
 
 
+  @pyqtSlot()
+  def onSave(self, fileName=None):
+
+    if fileName is None:
+      fileName = QtGui.QFileDialog.getSaveFileName(
+        'Save configuration', QtCore.QDir.currentPath(),
+        filter='"Slits (*.slits)"')
+
+    config = QSettings(fileName, QtCore.QSettings.IniFormat)
+
+    config.setValue('distance', self.ui.distance.value())
+    config.setValue('tabbedui', self.ui.viewTab.isChecked())
+    config.setValue('driverel', self.ui.driveRel.isChecked())
+
+    for nslt in self.slitNames.keys():
+      config.beginGroup(nslt.name)
+      config.setValue('undercontrol', self.synbts[nslt].isChecked())
+      for mot in self.bears[nslt].motors.values():
+        config.setValue(mot.getPv(), mot.getUserPosition())
+      config.endGroup()
 
 
-app = QtWidgets.QApplication(sys.argv)
+  @pyqtSlot()
+  def onLoad(self, fileName=None):
+    pass
+
+
+app = QApplication(sys.argv)
 
 my_mainWindow = MainWindow()
 my_mainWindow.show()

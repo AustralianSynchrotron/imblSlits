@@ -169,13 +169,7 @@ class Slits(QWidget) :
     self.ui.dTP.label.setText('top')
     self.ui.dBT.label.setText('bottom')
 
-    minDriverWidth = self.ui.stepWidget.sizeHint().width()
-    for drv in self.ui.findChildren(Driver):
-      drv.setMinimumWidth(minDriverWidth)
-    minSide = min(minDriverWidth, self.ui.dVP.sizeHint().height())
-    self.ui.face.setMinimumSize(minSide, minSide)
-
-    self.ui.sizeLabel.setStyleSheet('image: url(' + filePath + 'labplot-auto-scale-all.svg);')
+    self.ui.sizeLabel    .setStyleSheet('image: url(' + filePath + 'labplot-auto-scale-all.svg);')
     self.ui.positionLabel.setStyleSheet('image: url(' + filePath + 'labplot-transform-move.svg);')
 
     self.dist = 1
@@ -186,16 +180,22 @@ class Slits(QWidget) :
     self.motors = {}
     self.motGeom = {rol : 0 for rol in MR}
     self.drivers = {}
-    for rol in MR :
-      drv = eval('self.ui.d'+rol.name)
-      self.drivers[rol] = drv
+    for rol in MR:
+      self.drivers[rol] = eval('self.ui.d'+rol.name)
+
+    minDriverWidth = self.ui.stepWidget.sizeHint().width()
+    minSide = min(minDriverWidth, self.ui.dVP.sizeHint().height())
+    self.ui.face.setMinimumSize(minSide, minSide)
+
+    for drv in self.drivers.values():
       drv.vChng.connect(self.synchDrivers)
       drv.goToP.connect(self.onMoveOrder)
+      drv.setMinimumWidth(minDriverWidth)
+      self.changedMotion.connect(drv.setDisabled)
 
     self.ui.stack.lock(True)
     self.ui.stack.hide()
     self.ui.showStack.hide()
-    self.ui.lineBot.hide()
     self.ui.showStack.toggled.connect(self.ui.stack.setVisible)
     self.ui.showStack.toggled.connect(self.ui.spacer.setHidden)
 
@@ -227,7 +227,6 @@ class Slits(QWidget) :
       self.motors[motoRole] = mot
 
     self.ui.showStack.setVisible(len(self.motors))
-    self.ui.lineBot.setVisible(len(self.motors))
     self.onStatusChange()
 
 
@@ -284,19 +283,13 @@ class Slits(QWidget) :
 
 
   @pyqtSlot()
-  def onStatusChange(self):
+  def onStatusChange(self, newConnected=True, newMoving=False, newLimit=False):
 
-    if not len(self.motors) :
-      return
-
-    newConnected = True
-    newMoving = False
-    newOnLimit = False
-
-    for rol, mot in self.motors.items() :
-      newConnected &= mot.isConnected()
-      newMoving |= mot.isMoving()
-      newOnLimit |= mot.getHiLimitStatus() & mot.getLoLimitStatus()
+    if len(self.motors):
+      for rol, mot in self.motors.items() :
+        newConnected &= mot.isConnected()
+        newMoving |= mot.isMoving()
+        newLimit |= mot.getHiLimitStatus() & mot.getLoLimitStatus()
 
     if newConnected != self.isConnected :
       self.isConnected = newConnected
@@ -315,8 +308,8 @@ class Slits(QWidget) :
       self.changedMotion.emit(self.isMoving)
       self.update()
 
-    if newOnLimit != self.isOnLimit :
-      self.isOnLimit = newOnLimit
+    if newLimit != self.isOnLimit :
+      self.isOnLimit = newLimit
       self.ui.limitW.setVisible(self.isOnLimit)
       self.changedLimits.emit(self.isOnLimit)
 
