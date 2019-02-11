@@ -236,10 +236,12 @@ class Slits(QWidget) :
     if baseMotorPV is not None and self.baseMotor is None:
       self.baseMotor = addMotor(baseMotorPV)
     for motoPV in addMotors:
-      self.ui.stack.addMotor(motoPV).motor()
+      addMotor(motoPV)
 
     self.ui.showStack.setVisible(len(self.motors))
     self.onStatusChange()
+
+    
 
 
   def _motorsPos(self, rbv=True) :
@@ -280,7 +282,8 @@ class Slits(QWidget) :
     if not len(self.motors) :
       self.motGeom = dest
     else :
-      psb = 0 if self.baseMotor in (None, self.motors[MR.VP]) else self.baseMotor.getUserPosition()
+      psb = 0 if self.baseMotor in (None, self.motors[MR.VP]) else \
+        self.baseMotor.getUserPosition()
       for rol, mot in self.motors.items() :
         trg = dest[rol] * self.dist
         if rol in (MR.BT, MR.TP, MR.VP):
