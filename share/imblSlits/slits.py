@@ -269,6 +269,26 @@ class Slits(QWidget) :
     return { rol : drv.pos()/self.dist for rol, drv in self.drivers.items() }
 
 
+  @pyqtSlot()
+  def onMoveOrder(self, dest=None):
+    orig = self.posRBV()
+    if dest is None :
+      dest = self.posDRV()
+    else :
+      posFill(dest)
+    self.willMoveNow.emit(orig, dest)
+    if not len(self.motors) :
+      self.motGeom = dest
+    else :
+      psb = 0 if self.baseMotor in (None, self.motors[MR.VP]) else self.baseMotor.getUserPosition()
+      for rol, mot in self.motors.items() :
+        trg = dest[rol] * self.dist
+        if rol in (MR.BT, MR.TP, MR.VP):
+          trg += self.base - psb
+        mot.goUserPosition(trg)
+    self.changedGeometry.emit()
+
+
   def setPos(self, pos):
     posFill(pos)
     for rol, drv in self.drivers.items() :
@@ -335,23 +355,6 @@ class Slits(QWidget) :
       'color: rgb(128, 0, 0);' \
         if self.isOnLimit or self.isMoving else \
       '')
-
-
-
-  @pyqtSlot()
-  def onMoveOrder(self, dest=None):
-    orig = self.posRBV()
-    if dest is None :
-      dest = self.posDRV()
-    else :
-      posFill(dest)
-    self.willMoveNow.emit(orig, dest)
-    if not len(self.motors) :
-      self.motGeom = dest
-    else :
-      for rol, mot in self.motors.items() :
-        mot.goUserPosition(dest[rol]*self.dist)
-    self.changedGeometry.emit()
 
 
   @pyqtSlot()
