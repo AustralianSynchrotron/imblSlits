@@ -303,8 +303,8 @@ class Slits(QWidget) :
     if len(self.motors):
       for mot in (motui.motor() for motui in self.ui.stack.motorList()) :
         newConnected &= mot.isConnected()
-        newMoving |= mot.isMoving()
-        newLimit |= mot.getHiLimitStatus() or mot.getLoLimitStatus()
+        newMoving    |= mot.isMoving()
+        newLimit     |= mot.getHiLimitStatus() or mot.getLoLimitStatus()
 
     if newConnected != self.isConnected :
       self.isConnected = newConnected
