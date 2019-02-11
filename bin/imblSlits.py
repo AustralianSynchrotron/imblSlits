@@ -46,8 +46,7 @@ class BLmode(QObject):
     super(BLmode, self).__init__()
 
     def onUpdate(**kw):
-      # self.updated.emit(self.Encl.MOD3.value+'-'+self.Shut.MONO.value)
-      self.updated.emit(self.encl().value+'-'+self.shut().value)
+      self.updated.emit(str(self))
     self.m1PV.add_callback(onUpdate)
     self.m2PV.add_callback(onUpdate)
     self.m3PV.add_callback(onUpdate)
@@ -55,9 +54,16 @@ class BLmode(QObject):
     self.monoPV.add_callback(onUpdate)
     self.mrtsPV.add_callback(onUpdate)
 
+  def __str__(self):
+    return self.encl().value+'-'+self.shut().value
+
 
   def encl(self):
-    if self.m3PV.value:
+    if self.m3PV.get(timeout=0) is None or \
+       self.m2PV.get(timeout=0) is None or \
+       self.m1PV.get(timeout=0) is None :
+      return self.Encl.NONE
+    elif self.m3PV.value:
       return self.Encl.MOD3
     elif self.m2PV.value:
       return self.Encl.MOD2
@@ -68,9 +74,9 @@ class BLmode(QObject):
 
 
   def shut(self):
-    if self.pinkPV.value is None or \
-       self.monoPV.value is None or \
-       self.mrtsPV.value is None or \
+    if self.pinkPV.get(timeout=0) is None or \
+       self.monoPV.get(timeout=0) is None or \
+       self.mrtsPV.get(timeout=0) is None or \
        1 != self.pinkPV.value + self.monoPV.value + self.mrtsPV.value:
       return self.Shut.NONE
     elif self.pinkPV.value:
@@ -158,8 +164,9 @@ class MainWindow(QMainWindow):
     self.ui.statusbar.addPermanentWidget(QWidget(), 1)
 
     self.ui.statusbar.addPermanentWidget(QLabel('Beamline mode: ', self))
-    modeLabel = QLabel('...', self)
+    modeLabel = QLabel(str(self.blMode), self)
     self.blMode.updated.connect(modeLabel.setText)
+    self.blMode.updated.connect(lambda x: print('UPD', x))
     self.ui.statusbar.addPermanentWidget(modeLabel)
 
     distances = QMenu(self)
@@ -226,7 +233,8 @@ class MainWindow(QMainWindow):
     self.configFam.setVisible(toShow)
     for i in range(0, 10):
       QApplication.processEvents()
-    QtCore.QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
+    if not toShow and self.ui.famWidget.isVisible():
+      QtCore.QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
 
   @pyqtSlot()
@@ -276,10 +284,10 @@ class MainWindow(QMainWindow):
       if not len(posS):
         return
       elif 'any' in sndtxt:
-        for rol in (MR.LF, MR.RT, MR.TP, MR.BT):
+        for rol in MR.LF, MR.RT, MR.TP, MR.BT:
           posf[rol] = max(pos[rol] for pos in posS)
       elif 'all' in sndtxt:
-        for rol in (MR.LF, MR.RT, MR.TP, MR.BT):
+        for rol in MR.LF, MR.RT, MR.TP, MR.BT:
           posf[rol] = min(pos[rol] for pos in posS)
     self.ui.mashaBear.setPos(posf)
 
@@ -310,11 +318,11 @@ class MainWindow(QMainWindow):
     for nslt in self.slitNames.keys():
       if self.synbts[nslt].isChecked():
         slt = self.bears[nslt]
-        if self.ui.diveAbs.isChecked():
+        if self.ui.driveAbs.isChecked():
           slt.onMoveOrder(dest)
         else:
           sorig = slt.posRBV()
-          sdest = {sorig[rol] + dest[rol] - orig[rol] : rol for rol in MR}
+          sdest = {rol : sorig[rol] + dest[rol] - orig[rol] for rol in MR}
           slt.onMoveOrder(sdest)
 
 
@@ -330,23 +338,24 @@ class MainWindow(QMainWindow):
     self.ui.mashaBear.onStatusChange(newConnected, newMoving, newLimit)
 
 
-
   @pyqtSlot()
   def onSave(self, fileName=None):
 
     if fileName is None:
-      fileName = QtGui.QFileDialog.getSaveFileName(
+      fileName = QtWidgets.QFileDialog.getSaveFileName(self,
         'Save configuration', QtCore.QDir.currentPath(),
-        filter='"Slits (*.slits)"')
+        filter="Slits (*.slits);;All Files (*)")[0]
+    if not fileName:
+      return
 
-    config = QSettings(fileName, QtCore.QSettings.IniFormat)
+    config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
 
     config.setValue('distance', self.ui.distance.value())
     config.setValue('tabbedui', self.ui.viewTab.isChecked())
     config.setValue('driverel', self.ui.driveRel.isChecked())
 
     for nslt in self.slitNames.keys():
-      config.beginGroup(nslt.name)
+      config.beginGroup(nslt)
       config.setValue('undercontrol', self.synbts[nslt].isChecked())
       for mot in self.bears[nslt].motors.values():
         config.setValue(mot.getPv(), mot.getUserPosition())

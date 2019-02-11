@@ -1,7 +1,7 @@
 import sys, os, copy
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QLineF
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QLineF, QRectF
 from PyQt5.QtGui import  QPen, QBrush, QColor
 from PyQt5.uic import loadUi
 from enum import Enum, auto
@@ -105,6 +105,7 @@ class SlitsVis(QWidget) :
     fw2 = fw/2.0
     fh2 = fh/2.0
 
+    slt = self.parent()
     painter = QtGui.QPainter(self)
 
     painter.setRenderHint(QtGui.QPainter.Antialiasing, True)
@@ -115,26 +116,28 @@ class SlitsVis(QWidget) :
     painter.scale(scale, -scale)
 
     # beam
-    #painter.drawRect(QRectF(-fw2, -fh2, fw, fh));
+    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0)), 0))
+    painter.drawRect(QRectF(-fw2, -fh2, fw, fh));
 
     # coordinates
-    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0)), 0, QtCore.Qt.DotLine))
-    painter.drawLine(QtCore.QLineF(-fw2,0,fw2,0))
-    painter.drawLine(QtCore.QLineF(0,-fh2,0,fh2))
+    painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(255,255,255)),
+                              0, QtCore.Qt.DotLine))
+    painter.drawLine(QLineF(-fw2, 0,    fw2, 0  ))
+    painter.drawLine(QLineF(0,    -fh2, 0,   fh2))
 
     # destination geometry
-    pos = self.parent().posGLV() if self.parent().isMoving else self.parent().posDRV()
+    pos = slt.posGLV() if slt.isMoving else slt.posDRV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38)), 0))
-    painter.drawRect(QtCore.QRectF(-pos[MR.LF], -pos[MR.BT], pos[MR.HS], pos[MR.VS]))
+    painter.drawRect(QRectF(-pos[MR.LF], -pos[MR.BT], pos[MR.HS], pos[MR.VS]))
 
     # read back geometry
-    pos = self.parent().posRBV()
+    pos = slt.posRBV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38,50)), 0))
     painter.setBrush(QColor(227,121,38,50))
-    painter.drawRect(QtCore.QRectF(-fw2,  fh2, fw, pos[MR.TP] - fh2)) # top
-    painter.drawRect(QtCore.QRectF(-fw2, -fh2, fw, fh2 - pos[MR.BT])) # bot
-    painter.drawRect(QtCore.QRectF(-fw2, -fh2, fw2 - pos[MR.LF], fh)) # left
-    painter.drawRect(QtCore.QRectF( fw2, -fh2, pos[MR.RT] - fw2, fh)) # right
+    painter.drawRect(QRectF(-fw2,  fh2, fw              , pos[MR.TP] - fh2)) # top
+    painter.drawRect(QRectF(-fw2, -fh2, fw              , fh2 - pos[MR.BT])) # bot
+    painter.drawRect(QRectF(-fw2, -fh2, fw2 - pos[MR.LF], fh              )) # left
+    painter.drawRect(QRectF( fw2, -fh2, pos[MR.RT] - fw2, fh              )) # right
 
     self.heightChanged.emit(self.height())
 
@@ -168,6 +171,7 @@ class Slits(QWidget) :
     self.ui.dRT.label.setText('right')
     self.ui.dTP.label.setText('top')
     self.ui.dBT.label.setText('bottom')
+    self.ui.step.setConfirmationRequired(False)
 
     self.ui.sizeLabel    .setStyleSheet('image: url(' + filePath + 'labplot-auto-scale-all.svg);')
     self.ui.positionLabel.setStyleSheet('image: url(' + filePath + 'labplot-transform-move.svg);')
@@ -198,9 +202,7 @@ class Slits(QWidget) :
     self.ui.showStack.hide()
     self.ui.showStack.toggled.connect(self.ui.stack.setVisible)
     self.ui.showStack.toggled.connect(self.ui.spacer.setHidden)
-
     self.ui.limitW.hide()
-    self.ui.linkW.hide()
 
     self.ui.changedGeometry.connect(self.ui.visual.update)
 
@@ -289,7 +291,7 @@ class Slits(QWidget) :
       for rol, mot in self.motors.items() :
         newConnected &= mot.isConnected()
         newMoving |= mot.isMoving()
-        newLimit |= mot.getHiLimitStatus() & mot.getLoLimitStatus()
+        newLimit |= mot.getHiLimitStatus() or mot.getLoLimitStatus()
 
     if newConnected != self.isConnected :
       self.isConnected = newConnected
@@ -297,8 +299,9 @@ class Slits(QWidget) :
       self.ui.linkW.setVisible(not self.isConnected)
       if self.isConnected :
         self.onPositionChange()
-        step = max(mot.getStep() for mot in self.motors.values())
-        self.ui.step.setValue(step)
+        if len(self.motors):
+          step = max(mot.getStep() for mot in self.motors.values())
+          self.ui.step.setValue(step)
       self.changedConnection.emit(self.isConnected)
 
     if newMoving != self.isMoving :
@@ -312,6 +315,14 @@ class Slits(QWidget) :
       self.isOnLimit = newLimit
       self.ui.limitW.setVisible(self.isOnLimit)
       self.changedLimits.emit(self.isOnLimit)
+
+    self.face.labTxt.setStyleSheet(
+      self.warnSS \
+        if not self.isConnected else \
+      'color: rgb(128, 0, 0);' \
+        if self.isOnLimit or self.isMoving else \
+      '')
+
 
 
   @pyqtSlot()

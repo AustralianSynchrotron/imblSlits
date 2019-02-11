@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>Form</class>
  <widget class="QWidget" name="Form">
+  <property name="enabled">
+   <bool>false</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>253</width>
-    <height>504</height>
+    <width>301</width>
+    <height>543</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -120,7 +123,7 @@
       <item row="1" column="0" colspan="2">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
-         <widget class="QDoubleSpinBox" name="step">
+         <widget class="QMDoubleSpinBox" name="step">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -226,21 +229,51 @@
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
       <widget class="QLabel" name="limitW">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="styleSheet">
         <string notr="true">background-color: rgb(128, 0, 0);</string>
        </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
        <property name="text">
         <string>Limit</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QLabel" name="linkW">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="styleSheet">
         <string notr="true">background-color: rgb(128, 0, 0);</string>
        </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
        <property name="text">
         <string>No link</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -296,6 +329,15 @@
    <extends>QWidget</extends>
    <header location="global">slits.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QMDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header location="global">qtpvwidgets.h</header>
+   <slots>
+    <signal>valueEdited(double)</signal>
+    <signal>escaped()</signal>
+   </slots>
   </customwidget>
  </customwidgets>
  <resources/>
