@@ -140,23 +140,26 @@ class MainWindow(QMainWindow):
     self.ui. babyBear.setMotors({MR.VP : 'SR08ID01SLM12:VCENTRE',
                                  MR.VS : 'SR08ID01SLM12:VSIZE',
                                  MR.HP : 'SR08ID01SLM12:HCENTRE',
-                                 MR.HS : 'SR08ID01SLM12:HSIZE'})
-                                 #MR.LF : 'SR08ID01SLM12:IN',
-                                 #MR.RT : 'SR08ID01SLM12:OUT',
-                                 #MR.BT : 'SR08ID01SLM12:BOT',
-                                 #MR.TP : 'SR08ID01SLM12:TOP'} )
+                                 MR.HS : 'SR08ID01SLM12:HSIZE'},
+                                'SR08ID01SLM12:VCENTRE',
+                                ['SR08ID01SLM12:IN',
+                                 'SR08ID01SLM12:OUT',
+                                 'SR08ID01SLM12:BOT',
+                                 'SR08ID01SLM12:TOP'])
 
     self.ui. mamaBear.setDistance(31)
     self.ui. mamaBear.setMotors({MR.VP : 'SR08ID01SLM21:Z',
                                  MR.VS : 'SR08ID01SLM21:ZGAP',
                                  MR.HP : 'SR08ID01SLM21:Y',
-                                 MR.HS : 'SR08ID01SLM21:YGAP'})
+                                 MR.HS : 'SR08ID01SLM21:YGAP'},
+                                'SR08ID01TBL21:Z')
 
     self.ui.papaBear.setDistance(136)
     self.ui.papaBear.setMotors(  {MR.VP : 'SR08ID01SLM03:ZCENTRE',
                                   MR.VS : 'SR08ID01SLM03:ZGAP',
                                   MR.HP : 'SR08ID01SLM03:YCENTRE',
-                                  MR.HS : 'SR08ID01SLM03:YGAP'})
+                                  MR.HS : 'SR08ID01SLM03:YGAP'},
+                                 'SR08ID01SLM03:ZCENTRE')
 
     showcfg = QPushButton('Show config', self)
     showcfg.clicked.connect(self.toggleConfigShow)
@@ -206,8 +209,8 @@ class MainWindow(QMainWindow):
 
   @pyqtSlot()
   def updateBase(self):
-    for slit in self.ui.babyBear, self.ui.papaBear, self.ui.mashaBear:
-      slit.setBase(20 if self.blMode.shut() == BLmode.Shut.MONO else 0)
+    for slt in self.bears.values():
+      slt.setBase(20 if self.blMode.shut() == BLmode.Shut.MONO else 0)
 
 
   @pyqtSlot()

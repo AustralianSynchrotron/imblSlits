@@ -183,6 +183,7 @@ class Slits(QWidget) :
     self.isOnLimit = False
     self.motors = {}
     self.motGeom = {rol : 0 for rol in MR}
+    self.baseMotor = None
     self.drivers = {}
     for rol in MR:
       self.drivers[rol] = eval('self.ui.d'+rol.name)
@@ -207,15 +208,15 @@ class Slits(QWidget) :
     self.ui.changedGeometry.connect(self.ui.visual.update)
 
 
-  def setMotors(self, motorsDictionary={}) :
+  def setMotors(self, motors, baseMotorPV=None, addMotors=[]) :
 
     if len(self.motors) :
       print('slits error: redefinition of the motors.')
       return
-    if not len(motorsDictionary) :
+    if not len(motors) :
       return
 
-    for motoRole, motoPV in motorsDictionary.items() :
+    for motoRole, motoPV in motors.items() :
       mot = self.ui.stack.addMotor(motoPV).motor()
       mot.changedMoving       .connect(self.onStatusChange)
       mot.changedConnected    .connect(self.onStatusChange)
@@ -227,6 +228,14 @@ class Slits(QWidget) :
       mot.changedUserGoal     .connect(self.onPositionChange)
       self.ui.stop.clicked.connect(mot.stop)
       self.motors[motoRole] = mot
+      if baseMotorPV is not None and motoPV == baseMotorPV:
+        self.baseMotor = mot
+
+    if baseMotorPV is not None and self.baseMotor is None:
+      self.baseMotor = self.ui.stack.addMotor(baseMotorPV).motor()
+
+    for motoPV in addMotors:
+      self.ui.stack.addMotor(motoPV).motor()
 
     self.ui.showStack.setVisible(len(self.motors))
     self.onStatusChange()
@@ -236,11 +245,13 @@ class Slits(QWidget) :
     if not len(self.motors) :
       return self.motGeom
     pos = {}
+    psb = 0 if self.baseMotor in (None, self.motors[MR.VP]) else \
+      self.baseMotor.getUserPosition() if rbv else self.baseMotor.getUserGoal()
     for rol, mot in self.motors.items() :
       ps = mot.getUserPosition() if rbv else mot.getUserGoal()
       pos[rol] = ps/self.dist
       if rol in (MR.BT, MR.TP, MR.VP) :
-        pos[rol] -= self.base/self.dist
+        pos[rol] += (psb - self.base)/self.dist
     posFill(pos)
     return pos
 
