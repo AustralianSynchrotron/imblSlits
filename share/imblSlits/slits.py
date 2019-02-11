@@ -216,7 +216,7 @@ class Slits(QWidget) :
     if not len(motors) :
       return
 
-    for motoRole, motoPV in motors.items() :
+    def addMotor(motoPV):
       mot = self.ui.stack.addMotor(motoPV).motor()
       mot.changedMoving       .connect(self.onStatusChange)
       mot.changedConnected    .connect(self.onStatusChange)
@@ -227,13 +227,14 @@ class Slits(QWidget) :
       mot.changedUserPosition .connect(self.onPositionChange)
       mot.changedUserGoal     .connect(self.onPositionChange)
       self.ui.stop.clicked.connect(mot.stop)
-      self.motors[motoRole] = mot
+      return mot
+
+    for motoRole, motoPV in motors.items() :
+      self.motors[motoRole] = addMotor(motoPV)
       if baseMotorPV is not None and motoPV == baseMotorPV:
-        self.baseMotor = mot
-
+        self.baseMotor = self.motors[motoRole]
     if baseMotorPV is not None and self.baseMotor is None:
-      self.baseMotor = self.ui.stack.addMotor(baseMotorPV).motor()
-
+      self.baseMotor = addMotor(baseMotorPV)
     for motoPV in addMotors:
       self.ui.stack.addMotor(motoPV).motor()
 
@@ -278,8 +279,9 @@ class Slits(QWidget) :
 
   @pyqtSlot(float)
   def setBase(self, base) :
-    self.base = base
-    self.onPositionChange()
+    if self.baseMotor:
+      self.base = base
+      self.onPositionChange()
 
 
   @pyqtSlot(float)
@@ -299,7 +301,7 @@ class Slits(QWidget) :
   def onStatusChange(self, newConnected=True, newMoving=False, newLimit=False):
 
     if len(self.motors):
-      for rol, mot in self.motors.items() :
+      for mot in (motui.motor() for motui in self.ui.stack.motorList()) :
         newConnected &= mot.isConnected()
         newMoving |= mot.isMoving()
         newLimit |= mot.getHiLimitStatus() or mot.getLoLimitStatus()
@@ -362,20 +364,20 @@ class Slits(QWidget) :
     rol = [rl for rl,dr in self.drivers.items() if dr == drv][0]
     if   rol == MR.BT or rol == MR.TP:
       tp, bt = self.drivers[MR.TP].pos(), self.drivers[MR.BT].pos()
-      self.drivers[MR.VS].setPos(tp + bt, True)
-      self.drivers[MR.VP].setPos(tp/2 - bt/2, True)
+      self.drivers[MR.VS].setPos(tp + bt)
+      self.drivers[MR.VP].setPos(tp/2 - bt/2)
     elif rol == MR.VS or rol == MR.VP:
       vs, vp = self.drivers[MR.VS].pos(), self.drivers[MR.VP].pos()
-      self.drivers[MR.TP].setPos(vs/2 + vp, True)
-      self.drivers[MR.BT].setPos(vs/2 - vp, True)
+      self.drivers[MR.TP].setPos(vs/2 + vp)
+      self.drivers[MR.BT].setPos(vs/2 - vp)
     elif rol == MR.LF or rol == MR.RT:
       lf, rt = self.drivers[MR.LF].pos(), self.drivers[MR.RT].pos()
-      self.drivers[MR.HS].setPos(rt+lf, True)
-      self.drivers[MR.HP].setPos(rt/2 - lf/2, True)
+      self.drivers[MR.HS].setPos(rt+lf)
+      self.drivers[MR.HP].setPos(rt/2 - lf/2)
     elif rol == MR.HS or rol == MR.HP:
       hs, hp = self.drivers[MR.HS].pos(), self.drivers[MR.HP].pos()
-      self.drivers[MR.RT].setPos(hs/2 + hp, True)
-      self.drivers[MR.LF].setPos(hs/2 - hp, True)
+      self.drivers[MR.RT].setPos(hs/2 + hp)
+      self.drivers[MR.LF].setPos(hs/2 - hp)
 
     self.changedGeometry.emit()
 

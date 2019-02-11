@@ -169,7 +169,6 @@ class MainWindow(QMainWindow):
     self.ui.statusbar.addPermanentWidget(QLabel('Beamline mode: ', self))
     modeLabel = QLabel(str(self.blMode), self)
     self.blMode.updated.connect(modeLabel.setText)
-    self.blMode.updated.connect(lambda x: print('UPD', x))
     self.ui.statusbar.addPermanentWidget(modeLabel)
 
     distances = QMenu(self)
@@ -191,6 +190,8 @@ class MainWindow(QMainWindow):
     for slt in self.ui.findChildren(Slits):
       slt.changedConnection.connect(self.initMasha)
     self.blMode.updated.connect(self.updateBase)
+    QtCore.QTimer.singleShot(0, self.updateBase)
+
 
     self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
     self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
@@ -198,6 +199,9 @@ class MainWindow(QMainWindow):
 
     self.ui.save.clicked.connect(self.onSave)
     self.ui.load.clicked.connect(self.onLoad)
+
+    self.ui.goWhite.clicked.connect(self.moveToBlMode)
+    self.ui.goMono .clicked.connect(self.moveToBlMode)
 
     self.ui.mashaBear.willMoveNow.connect(self.onMashaMove)
     for slt in self.bears.values():
@@ -211,6 +215,19 @@ class MainWindow(QMainWindow):
   def updateBase(self):
     for slt in self.bears.values():
       slt.setBase(20 if self.blMode.shut() == BLmode.Shut.MONO else 0)
+
+
+  def moveToBlMode(self):
+    if self.sender() not in (self.ui.goWhite, self.ui.goMono):
+      return
+    for nslt in self.slitNames.keys():
+      slt = self.bears[nslt]
+      if self.synbts[nslt].isChecked() and slt.baseMotor is not None:
+        if self.ui.driveAbs.isChecked():
+          slt.baseMotor.goUserPosition(0 if self.sender() is self.ui.goWhite else 20)
+        else:
+          slt.baseMotor.goRelative(-20 if self.sender() is self.ui.goWhite else 20)
+
 
 
   @pyqtSlot()

@@ -34,8 +34,8 @@ class Driver(QWidget) :
     self.ui.position.setStyleSheet(self.warnSS if mvs else '')
 
   @pyqtSlot(float)
-  def setPos(self, pos, blockSignal=False) :
-    self.ui.position.blockSignals(blockSignal)
+  def setPos(self, pos) :
+    self.ui.position.blockSignals(True)
     self.ui.position.setValue(pos)
     self.ui.position.blockSignals(False)
     return self.pos()

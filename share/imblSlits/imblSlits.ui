@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>main.png</normaloff>main.png</iconset>
+    <normaloff>../../../../../.designer/backup/main.png</normaloff>../../../../../.designer/backup/main.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -523,14 +523,14 @@
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_5">
                 <item>
-                 <widget class="QPushButton" name="pushButton_2">
+                 <widget class="QPushButton" name="goWhite">
                   <property name="text">
                    <string>White</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton">
+                 <widget class="QPushButton" name="goMono">
                   <property name="text">
                    <string>Mono</string>
                   </property>
