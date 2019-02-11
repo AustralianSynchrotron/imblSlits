@@ -173,8 +173,8 @@ class Slits(QWidget) :
     self.ui.dBT.label.setText('bottom')
     self.ui.step.setConfirmationRequired(False)
 
-    self.ui.sizeLabel    .setStyleSheet('image: url(' + filePath + 'labplot-auto-scale-all.svg);')
-    self.ui.positionLabel.setStyleSheet('image: url(' + filePath + 'labplot-transform-move.svg);')
+    self.ui.sizeLabel    .setStyleSheet('image: url(' + filePath + 'size.svg);')
+    self.ui.positionLabel.setStyleSheet('image: url(' + filePath + 'position.svg);')
 
     self.dist = 1
     self.base = 0
