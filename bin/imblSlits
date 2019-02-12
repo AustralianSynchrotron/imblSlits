@@ -158,7 +158,10 @@ class MainWindow(QMainWindow):
                                   MR.VS : 'SR08ID01SLM03:ZGAP',
                                   MR.HP : 'SR08ID01SLM03:YCENTRE',
                                   MR.HS : 'SR08ID01SLM03:YGAP'},
-                                 'SR08ID01SLM03:ZCENTRE')
+                                 'SR08ID01SLM03:ZCENTRE',
+                                 ['SR08ID01SLM03:LEFT',
+                                  'SR08ID01SLM03:RIGHT',
+                                  'SR08ID01SLM03:ROTARYARM'])
 
     showcfg = QPushButton('Show config', self)
     showcfg.clicked.connect(self.toggleConfigShow)
@@ -366,7 +369,6 @@ class MainWindow(QMainWindow):
         filter="Slits (*.slits);;All Files (*)")[0]
     if not fileName:
       return
-
     config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
 
     config.setValue('distance', self.ui.distance.value())
@@ -375,9 +377,22 @@ class MainWindow(QMainWindow):
 
     for nslt in self.slitNames.keys():
       config.beginGroup(nslt)
+
       config.setValue('undercontrol', self.synbts[nslt].isChecked())
+
       for rol, mot in self.bears[nslt].motors.items():
         config.setValue('MR_' + rol.name, mot.getPv() + ' ' + str(mot.getUserPosition()))
+
+      addMotors = self.bears[nslt].additionalMotors()
+      if len(addMotors):
+        config.beginWriteArray("additionalmotors", len(addMotors))
+        cnt = 0
+        for mot in addMotors:
+          config.setArrayIndex(cnt)
+          config.setValue('mot', mot.getPv() + ' ' + str(mot.getUserPosition()))
+          cnt += 1
+        config.endArray()
+
       config.endGroup()
 
 

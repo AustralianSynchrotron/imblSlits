@@ -241,7 +241,13 @@ class Slits(QWidget) :
     self.ui.showStack.setVisible(len(self.motors))
     self.onStatusChange()
 
-    
+
+  def additionalMotors(self):
+    addMotors = []
+    for mot in (motui.motor() for motui in self.ui.stack.motorList()):
+      if mot not in self.motors.values():
+        addMotors.append(mot)
+    return addMotors
 
 
   def _motorsPos(self, rbv=True) :
