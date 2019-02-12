@@ -16,6 +16,14 @@ sys.path.append(sharePath)
 from slits import Slits, MR, Face
 
 
+def is_float(str):
+  try:
+    float(str)
+    return True
+  except ValueError:
+    return False
+
+
 class BLmode(QObject):
 
   class Encl(Enum):
@@ -102,12 +110,11 @@ class MainWindow(QMainWindow):
 
     super(MainWindow, self).__init__()
     self.ui = loadUi(sharePath + 'imblSlits.ui', self)
-    self.uiModeSwap(True)
-    self.toggleConfigShow()
+    self.ui.preset.hide() # todo implement presets
 
     self.bears = {}
     self.synbts = {}
-    for nslt in self.slitNames.keys():
+    for nslt in self.slitNames:
       self.bears[nslt] = eval('self.ui.'+nslt+'Bear')
       self.synbts[nslt] = eval('self.ui.'+nslt+'Synch')
 
@@ -163,10 +170,11 @@ class MainWindow(QMainWindow):
                                   'SR08ID01SLM03:RIGHT',
                                   'SR08ID01SLM03:ROTARYARM'])
 
-    showcfg = QPushButton('Show config', self)
-    showcfg.clicked.connect(self.toggleConfigShow)
-    self.ui.statusbar.addPermanentWidget(showcfg)
+    self.showcfg = QPushButton('', self)
+    self.showcfg.clicked.connect(self.showConfig)
+    self.ui.statusbar.addPermanentWidget(self.showcfg)
     self.ui.statusbar.addPermanentWidget(QWidget(), 1)
+    self.showConfig(False)
 
     self.ui.statusbar.addPermanentWidget(QLabel('Beamline mode: ', self))
     modeLabel = QLabel(str(self.blMode), self)
@@ -194,7 +202,6 @@ class MainWindow(QMainWindow):
     self.blMode.updated.connect(self.updateBase)
     QtCore.QTimer.singleShot(0, self.updateBase)
 
-
     self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
     self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
     self.uiModeSwap(True)
@@ -211,6 +218,7 @@ class MainWindow(QMainWindow):
       slt.changedConnection.connect(self.setMashaStatus)
       slt.changedMotion    .connect(self.setMashaStatus)
       slt.changedLimits    .connect(self.setMashaStatus)
+    QtCore.QTimer.singleShot(0, self.setMashaStatus)
 
 
   @pyqtSlot()
@@ -222,7 +230,7 @@ class MainWindow(QMainWindow):
   def moveToBlMode(self):
     if self.sender() not in (self.ui.goWhite, self.ui.goMono):
       return
-    for nslt in self.slitNames.keys():
+    for nslt in self.slitNames:
       slt = self.bears[nslt]
       if self.synbts[nslt].isChecked() and slt.baseMotor is not None:
         if self.ui.driveAbs.isChecked():
@@ -233,11 +241,11 @@ class MainWindow(QMainWindow):
 
 
   @pyqtSlot()
-  def toggleConfigShow(self):
+  def showConfig(self, toShow=None):
     tbwg = self.ui.tabWidget
-    toShow = tbwg.widget(tbwg.count()-1) is not self.ui.configTab
-    if self.sender():
-      self.sender().setText('Hide config' if toShow else 'Show config')
+    if toShow is None:
+      toShow = tbwg.widget(tbwg.count()-1) is not self.ui.configTab
+    self.showcfg.setText('Hide config' if toShow else 'Show config')
     if toShow:
       tbwg.addTab(self.ui.configTab, '')
       # Have to create and use this new widget as home for
@@ -270,7 +278,7 @@ class MainWindow(QMainWindow):
 
     eval('self.ui.masha'+wslt).layout().addWidget(self.ui.masha)
     eval('self.ui.config'+wslt).layout().addWidget(self.ui.config)
-    for nslt in self.slitNames.keys():
+    for nslt in self.slitNames:
       eval('self.ui.'+nslt+wslt).layout().addWidget(eval('self.ui.'+nslt))
     for slt in self.ui.findChildren(Slits):
       eval('slt.layFace'+wslt).layout().addWidget(slt.face)
@@ -300,7 +308,7 @@ class MainWindow(QMainWindow):
       posf = bearL[0].posDRV()
     else:
       posS = []
-      for nslt in self.slitNames.keys():
+      for nslt in self.slitNames:
         if self.synbts[nslt].isChecked():
           posS.append(self.bears[nslt].posDRV())
       if not len(posS):
@@ -337,7 +345,7 @@ class MainWindow(QMainWindow):
 
   @pyqtSlot(dict, dict)
   def onMashaMove(self, orig, dest):
-    for nslt in self.slitNames.keys():
+    for nslt in self.slitNames:
       if self.synbts[nslt].isChecked():
         slt = self.bears[nslt]
         if self.ui.driveAbs.isChecked():
@@ -370,35 +378,112 @@ class MainWindow(QMainWindow):
     if not fileName:
       return
     config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
+    if config is None or not config.isWritable():
+      QtWidgets.QMessageBox.warning(self, '',
+        'Failed to open and/or save configuration to\n' + fileName)
+      return
 
     config.setValue('distance', self.ui.distance.value())
     config.setValue('tabbedui', self.ui.viewTab.isChecked())
     config.setValue('driverel', self.ui.driveRel.isChecked())
 
-    for nslt in self.slitNames.keys():
-      config.beginGroup(nslt)
+    for nslt in self.slitNames:
+      if self.synbts[nslt].isChecked():
+        config.beginGroup(nslt)
+        slt = self.bears[nslt]
 
-      config.setValue('undercontrol', self.synbts[nslt].isChecked())
+        def motcfg(mot):
+          return mot.getPv() + ' ' + str(mot.getUserPosition())
 
-      for rol, mot in self.bears[nslt].motors.items():
-        config.setValue('MR_' + rol.name, mot.getPv() + ' ' + str(mot.getUserPosition()))
+        for rol, mot in slt.motors.items():
+          config.setValue('MR_' + rol.name, motcfg(mot))
 
-      addMotors = self.bears[nslt].additionalMotors()
-      if len(addMotors):
-        config.beginWriteArray("additionalmotors", len(addMotors))
-        cnt = 0
-        for mot in addMotors:
-          config.setArrayIndex(cnt)
-          config.setValue('mot', mot.getPv() + ' ' + str(mot.getUserPosition()))
-          cnt += 1
-        config.endArray()
+        if slt.baseMotor is not None and slt.baseMotor not in slt.motors.values():
+          config.setValue('MR_BS', motcfg(slt.baseMotor))
 
-      config.endGroup()
+        addMotors = slt.additionalMotors()
+        if len(addMotors):
+          config.beginWriteArray("additionalmotors", len(addMotors))
+          cnt = 0
+          for mot in addMotors:
+            config.setArrayIndex(cnt)
+            config.setValue('mot', motcfg(mot))
+            cnt += 1
+          config.endArray()
+
+        config.endGroup()
 
 
   @pyqtSlot()
   def onLoad(self, fileName=None):
-    pass
+
+    if fileName is None:
+      fileName = QtWidgets.QFileDialog.getOpenFileName(self,
+        'Load configuration', QtCore.QDir.currentPath(),
+        filter="Slits (*.slits);;All Files (*)")[0]
+    if not fileName:
+      return
+    config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
+    if config is None or config.status():
+      QtWidgets.QMessageBox.warning(self, '',
+        'Failed to open and/or load configuration from\n' + fileName)
+      return
+
+    if config.value('distance') is not None:
+      self.ui.distance.setValue(float(config.value('distance')))
+    if config.value('tabbedui') is not None:
+      self.uiModeSwap(bool(config.value('tabbedui')))
+    if config.value('driverel') is not None:
+      self.showConfig(bool(config.value('driverel')))
+
+    cfgprobs = []
+    groups = config.childGroups()
+    for nslt in self.slitNames:
+      self.synbts[nslt].setChecked(nslt in groups)
+
+      if nslt in groups:
+        config.beginGroup(nslt)
+        slt = self.bears[nslt]
+        roles = (key[3:] for key in config.childKeys() if key.startswith('MR_'))
+
+        for roln in roles:
+          pv, pos = config.value('MR_'+roln).split(' ')
+          rol = MR[roln] if roln in MR.__members__ else None
+          prob = None
+
+          if not is_float(pos):
+            prob = 'Non-float target position \"' + pos +'\"'
+          elif roln == 'BS':
+            if pv != slt.baseMotor.getPv():
+              prob = 'PV mismatch ' + pv + ' != ' + slt.baseMotor.getPv()
+            else:
+              slt.baseMotor.goUserPosition(float(pos))
+              #print('PVGO' + pv + '->' + pos)
+          elif rol is None:
+            prob = 'MotoRole has no member ' + roln
+          elif rol not in slt.motors:
+            prob = 'Has no motor with role ' + roln
+          elif pv != slt.motors[rol].getPv():
+            prob = 'PV mismatch ' + pv + ' != ' + slt.motors[rol].getPv()
+          else:
+            slt.motors[rol].goUserPosition(float(pos))
+            # print('PVGO ' + pv + '->' + pos)
+          if prob:
+            cfgprobs.append(nslt + ': ' + prob)
+
+        config.endGroup()
+
+    if len(cfgprobs):
+      msgprobs = 'There were problems loading config file:\n'
+      for prob in cfgprobs:
+        msgprobs += prob + '\n'
+      QtWidgets.QMessageBox.warning(self, '', msgprobs)
+
+
+
+
+
+
 
 
 app = QApplication(sys.argv)

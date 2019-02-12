@@ -245,7 +245,7 @@ class Slits(QWidget) :
   def additionalMotors(self):
     addMotors = []
     for mot in (motui.motor() for motui in self.ui.stack.motorList()):
-      if mot not in self.motors.values():
+      if mot not in self.motors.values() and mot is not self.baseMotor:
         addMotors.append(mot)
     return addMotors
 
