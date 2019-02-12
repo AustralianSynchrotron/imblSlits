@@ -16,7 +16,6 @@ sys.path.append(sharePath)
 from slits import Slits, MR, Face
 
 
-
 class BLmode(QObject):
 
   class Encl(Enum):
@@ -377,8 +376,8 @@ class MainWindow(QMainWindow):
     for nslt in self.slitNames.keys():
       config.beginGroup(nslt)
       config.setValue('undercontrol', self.synbts[nslt].isChecked())
-      for mot in self.bears[nslt].motors.values():
-        config.setValue(mot.getPv(), mot.getUserPosition())
+      for rol, mot in self.bears[nslt].motors.items():
+        config.setValue('MR_' + rol.name, mot.getPv() + ' ' + str(mot.getUserPosition()))
       config.endGroup()
 
 

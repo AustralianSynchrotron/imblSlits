@@ -17,9 +17,6 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="2">
-    <widget class="Driver" name="dHP" native="true"/>
-   </item>
    <item row="7" column="1">
     <widget class="Driver" name="dBT" native="true"/>
    </item>
@@ -49,37 +46,6 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="sizeLabel">
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QWidget" name="layFaceFam" native="true">
-     <layout class="QVBoxLayout" name="layout_2">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="Face" name="face" native="true"/>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item row="11" column="0" colspan="3">
     <widget class="QMotorStack" name="stack" native="true"/>
    </item>
@@ -107,9 +73,6 @@
    </item>
    <item row="6" column="0">
     <widget class="Driver" name="dLF" native="true"/>
-   </item>
-   <item row="2" column="0">
-    <widget class="Driver" name="dHS" native="true"/>
    </item>
    <item row="3" column="1">
     <widget class="Driver" name="dVS" native="true"/>
@@ -208,13 +171,6 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="2">
-    <widget class="QLabel" name="positionLabel">
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
    <item row="4" column="0" colspan="3">
     <widget class="Line" name="line_8">
      <property name="orientation">
@@ -283,6 +239,50 @@
     <widget class="Driver" name="dVP" native="true"/>
    </item>
    <item row="3" column="2">
+    <widget class="QLabel" name="sizeLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="positionLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QWidget" name="layFaceFam" native="true">
+     <layout class="QVBoxLayout" name="layout_2">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="Face" name="face" native="true"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="Driver" name="dHP" native="true"/>
+   </item>
+   <item row="2" column="2">
+    <widget class="Driver" name="dHS" native="true"/>
+   </item>
+   <item row="3" column="0">
     <widget class="QWidget" name="layFaceTab" native="true">
      <layout class="QVBoxLayout" name="layout_1">
       <property name="spacing">
@@ -307,6 +307,15 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>QMDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header location="global">qtpvwidgets.h</header>
+   <slots>
+    <signal>valueEdited(double)</signal>
+    <signal>escaped()</signal>
+   </slots>
+  </customwidget>
+  <customwidget>
    <class>Face</class>
    <extends>QWidget</extends>
    <header location="global">slits.h</header>
@@ -329,15 +338,6 @@
    <extends>QWidget</extends>
    <header location="global">slits.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>QMDoubleSpinBox</class>
-   <extends>QDoubleSpinBox</extends>
-   <header location="global">qtpvwidgets.h</header>
-   <slots>
-    <signal>valueEdited(double)</signal>
-    <signal>escaped()</signal>
-   </slots>
   </customwidget>
  </customwidgets>
  <resources/>

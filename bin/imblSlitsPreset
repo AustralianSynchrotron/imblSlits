@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -z "$1" ] ; then
+  echo "No input file provided. Exiting."
+  exit 1
+fi
+
+cat config.slits | grep MR_ | sed 's .*=  g' |
+while read pv pos ; do
+  caput $pv $pos
+done
+
