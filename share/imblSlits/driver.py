@@ -20,6 +20,7 @@ class Driver(QWidget) :
     self.ui.positive.clicked.connect(self.onArrowclick)
     self.ui.position.valueEdited.connect(self.goToP)
     self.ui.position.valueChanged.connect(self.vChng)
+    self.doublestep = False # sizes moves twice step
 
   @pyqtSlot(bool)
   def setHiLimit(self, lms) :
@@ -44,6 +45,8 @@ class Driver(QWidget) :
   def onArrowclick(self) :
     self.sender().setFocus()
     cf = 1 if self.sender() is self.ui.positive else -1
+    if self.doublestep:
+      cf *= 2
     self.setPos(self.pos() + cf*self.step())
     self.goToP.emit(self.pos())
     self.sender().clearFocus()

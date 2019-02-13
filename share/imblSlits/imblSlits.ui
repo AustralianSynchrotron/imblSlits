@@ -25,7 +25,7 @@
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>5</number>
       </property>
       <property name="usesScrollButtons">
        <bool>false</bool>
@@ -554,9 +554,6 @@
               </item>
               <item>
                <widget class="QComboBox" name="preset">
-                <property name="editable">
-                 <bool>true</bool>
-                </property>
                 <item>
                  <property name="text">
                   <string>to / from file</string>
@@ -774,7 +771,7 @@
      <x>0</x>
      <y>0</y>
      <width>493</width>
-     <height>44</height>
+     <height>34</height>
     </rect>
    </property>
   </widget>
@@ -782,13 +779,13 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Face</class>
+   <class>Slits</class>
    <extends>QWidget</extends>
    <header location="global">slits.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Slits</class>
+   <class>Face</class>
    <extends>QWidget</extends>
    <header location="global">slits.h</header>
    <container>1</container>

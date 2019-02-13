@@ -2,6 +2,7 @@
 
 import sys
 import os
+import glob
 from enum import Enum
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
@@ -23,6 +24,9 @@ def is_float(str):
   except ValueError:
     return False
 
+
+def filetitle(pth):
+  return os.path.splitext(os.path.basename(pth))[0]
 
 class BLmode(QObject):
 
@@ -96,9 +100,9 @@ class BLmode(QObject):
       return self.Shut.NONE
 
 
-
 class MainWindow(QMainWindow):
 
+  slitsExt = 'slits'
   blMode = BLmode()
   slitNames = {'panda': 'HHLS',
                'baby' : 'Baby bear',
@@ -107,10 +111,20 @@ class MainWindow(QMainWindow):
 
 
   def __init__(self):
-
     super(MainWindow, self).__init__()
+
+    self.localDataDir   = QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.AppDataLocation)
+    self.globalDataDirs = QtCore.QStandardPaths.standardLocations(QtCore.QStandardPaths.AppDataLocation)
+    os.makedirs(self.localDataDir, exist_ok=True)
     self.ui = loadUi(sharePath + 'imblSlits.ui', self)
-    self.ui.preset.hide() # todo implement presets
+    
+    prst = self.ui.preset
+    for ddir in self.globalDataDirs:
+      for cfg in glob.glob(ddir + os.path.sep + '*.' + self.slitsExt):
+        prst.addItem(filetitle(cfg), cfg)
+        prst.setItemData(prst.count()-1, cfg, QtCore.Qt.ToolTipRole)
+    prst.currentIndexChanged.connect(lambda idx: \
+      prst.setToolTip(prst.itemData(idx, QtCore.Qt.ToolTipRole)))
 
     self.bears = {}
     self.synbts = {}
@@ -148,10 +162,10 @@ class MainWindow(QMainWindow):
                                  MR.HP : 'SR08ID01SLM12:HCENTRE',
                                  MR.HS : 'SR08ID01SLM12:HSIZE'},
                                 'SR08ID01SLM12:VCENTRE',
-                                ['SR08ID01SLM12:IN',
-                                 'SR08ID01SLM12:OUT',
-                                 'SR08ID01SLM12:BOT',
-                                 'SR08ID01SLM12:TOP'])
+                                [(MR.LF, 'SR08ID01SLM12:IN'),
+                                 (MR.RT, 'SR08ID01SLM12:OUT'),
+                                 (MR.BT, 'SR08ID01SLM12:BOT'),
+                                 (MR.TP, 'SR08ID01SLM12:TOP')])
 
     self.ui. mamaBear.setDistance(31)
     self.ui. mamaBear.setMotors({MR.VP : 'SR08ID01SLM21:Z',
@@ -166,8 +180,8 @@ class MainWindow(QMainWindow):
                                   MR.HP : 'SR08ID01SLM03:YCENTRE',
                                   MR.HS : 'SR08ID01SLM03:YGAP'},
                                  'SR08ID01SLM03:ZCENTRE',
-                                 ['SR08ID01SLM03:LEFT',
-                                  'SR08ID01SLM03:RIGHT',
+                                 [(MR.LF, 'SR08ID01SLM03:LEFT'),
+                                  (MR.RT, 'SR08ID01SLM03:RIGHT'),
                                   'SR08ID01SLM03:ROTARYARM'])
 
     self.showcfg = QPushButton('', self)
@@ -358,28 +372,62 @@ class MainWindow(QMainWindow):
 
   @pyqtSlot()
   def setMashaStatus(self):
-    newConnected = True
-    newMoving = False
-    newLimit = False
+    connected = True
+    moving = False
+    limit = False
     for slt in self.bears.values():
-      newConnected &= slt.isConnected
-      newMoving |= slt.isMoving
-      newLimit |= slt.isOnLimit
-    self.ui.mashaBear.onStatusChange(newConnected, newMoving, newLimit)
+      connected &= slt.isConnected
+      moving |= slt.isMoving
+      limit |= slt.isOnLimit
+    self.ui.goWhite.setEnabled(connected and not moving)
+    self.ui.goMono .setEnabled(connected and not moving)
+    self.ui.save   .setEnabled(connected and not moving)
+    self.ui.load   .setEnabled(connected and not moving)
+    self.ui.mashaBear.onStatusChange(connected, moving, limit)
+
+  
+  def _fileSaveLoad(self, fileName, forsave):
+    prst = self.ui.preset
+    if fileName is not None:
+      return fileName
+    if prst.currentData():
+      if not forsave:
+        return prst.currentData()
+      ovwr = QMessageBox.warning(self, 'Overwrite file?',
+        'The file "' + prst.currentData() + '" already exists. Do you wish to overwrite it?',
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        QMessageBox.StandardButton.No)
+      return prst.currentData() if ovwr == QMessageBox.StandardButton.Yes else None
+
+    dialDir = self.fileDir if hasattr(self, 'fileDir') else self.localDataDir
+    getSL = QFileDialog.getSaveFileName \
+            if forsave else \
+            QFileDialog.getOpenFileName            
+    dialTitle = ('Save' if forsave else 'Load') + ' configuration'
+    fileName = getSL(self, dialTitle, dialDir,
+                     filter='Slits (*.'+self.slitsExt+');;All Files (*)')[0]
+
+    if not fileName:
+      return None
+    self.fileDir = os.path.dirname(fileName)
+    if -1 == prst.findData(fileName):
+      prst.addItem(filetitle(fileName), fileName)
+      prst.setItemData(prst.count()-1, fileName, QtCore.Qt.ToolTipRole)
+      prst.setCurrentIndex(prst.count()-1)
+    return fileName
+
 
 
   @pyqtSlot()
   def onSave(self, fileName=None):
 
-    if fileName is None:
-      fileName = QtWidgets.QFileDialog.getSaveFileName(self,
-        'Save configuration', QtCore.QDir.currentPath(),
-        filter="Slits (*.slits);;All Files (*)")[0]
+    fileName = self._fileSaveLoad(fileName, True)
     if not fileName:
       return
+
     config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
     if config is None or not config.isWritable():
-      QtWidgets.QMessageBox.warning(self, '',
+      QMessageBox.warning(self, '',
         'Failed to open and/or save configuration to\n' + fileName)
       return
 
@@ -417,15 +465,13 @@ class MainWindow(QMainWindow):
   @pyqtSlot()
   def onLoad(self, fileName=None):
 
-    if fileName is None:
-      fileName = QtWidgets.QFileDialog.getOpenFileName(self,
-        'Load configuration', QtCore.QDir.currentPath(),
-        filter="Slits (*.slits);;All Files (*)")[0]
+    fileName = self._fileSaveLoad(fileName, False)
     if not fileName:
       return
+
     config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
     if config is None or config.status():
-      QtWidgets.QMessageBox.warning(self, '',
+      QMessageBox.warning(self, '',
         'Failed to open and/or load configuration from\n' + fileName)
       return
 
@@ -477,7 +523,7 @@ class MainWindow(QMainWindow):
       msgprobs = 'There were problems loading config file:\n'
       for prob in cfgprobs:
         msgprobs += prob + '\n'
-      QtWidgets.QMessageBox.warning(self, '', msgprobs)
+      QMessageBox.warning(self, '', msgprobs)
 
 
 

@@ -25,7 +25,6 @@ class MR(Enum) :
 
 
 def posFill(pos) :
-
   if   MR.VP     in pos or MR.VS     in pos :
     if MR.VP not in pos or MR.VS not in pos :
       return False
@@ -117,7 +116,7 @@ class SlitsVis(QWidget) :
 
     # beam
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0)), 0))
-    painter.drawRect(QRectF(-fw2, -fh2, fw, fh));
+    painter.drawRect(QRectF(-fw2, -fh2, fw, fh))
 
     # coordinates
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(255,255,255)),
@@ -171,6 +170,8 @@ class Slits(QWidget) :
     self.ui.dRT.label.setText('right')
     self.ui.dTP.label.setText('top')
     self.ui.dBT.label.setText('bottom')
+    self.ui.dVS.doublestep=True
+    self.ui.dHS.doublestep=True
     self.ui.step.setConfirmationRequired(False)
 
     self.ui.sizeLabel    .setStyleSheet('image: url(' + filePath + 'size.svg);')
@@ -208,7 +209,7 @@ class Slits(QWidget) :
     self.ui.changedGeometry.connect(self.ui.visual.update)
 
 
-  def setMotors(self, motors, baseMotorPV=None, addMotors=[]) :
+  def setMotors(self, motors, baseMotorPV=None, additionalMotors=[]) :
 
     if len(self.motors) :
       print('slits error: redefinition of the motors.')
@@ -216,38 +217,44 @@ class Slits(QWidget) :
     if not len(motors) :
       return
 
-    def addMotor(motoPV):
+    def addMotor(motoPV, motoRole=None):
       mot = self.ui.stack.addMotor(motoPV).motor()
+      mot.changedUserPosition .connect(self.onPositionChange)
+      mot.changedUserGoal     .connect(self.onPositionChange)
       mot.changedMoving       .connect(self.onStatusChange)
       mot.changedConnected    .connect(self.onStatusChange)
       mot.changedHiLimitStatus.connect(self.onStatusChange)
-      mot.changedHiLimitStatus.connect(self.drivers[motoRole].setHiLimit)
       mot.changedLoLimitStatus.connect(self.onStatusChange)
-      mot.changedLoLimitStatus.connect(self.drivers[motoRole].setLoLimit)
-      mot.changedUserPosition .connect(self.onPositionChange)
-      mot.changedUserGoal     .connect(self.onPositionChange)
+      if motoRole is not None:
+        mot.changedHiLimitStatus.connect(self.drivers[motoRole].setHiLimit)
+        mot.changedLoLimitStatus.connect(self.drivers[motoRole].setLoLimit)
       self.ui.stop.clicked.connect(mot.stop)
       return mot
 
-    for motoRole, motoPV in motors.items() :
-      self.motors[motoRole] = addMotor(motoPV)
+    for rol, motoPV in motors.items() :
+      self.motors[rol] = addMotor(motoPV, rol)
       if baseMotorPV is not None and motoPV == baseMotorPV:
-        self.baseMotor = self.motors[motoRole]
+        self.baseMotor = self.motors[rol]
     if baseMotorPV is not None and self.baseMotor is None:
       self.baseMotor = addMotor(baseMotorPV)
-    for motoPV in addMotors:
-      addMotor(motoPV)
+    for motoPV in additionalMotors:
+      if type(motoPV) is tuple:
+        addMotor(motoPV[1], motoPV[0])
+      else:
+        addMotor(motoPV)
+         
 
     self.ui.showStack.setVisible(len(self.motors))
+    self.onPositionChange()
     self.onStatusChange()
 
 
   def additionalMotors(self):
-    addMotors = []
+    retMotors = []
     for mot in (motui.motor() for motui in self.ui.stack.motorList()):
       if mot not in self.motors.values() and mot is not self.baseMotor:
-        addMotors.append(mot)
-    return addMotors
+        retMotors.append(mot)
+    return retMotors
 
 
   def _motorsPos(self, rbv=True) :
