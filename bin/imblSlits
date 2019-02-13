@@ -202,13 +202,20 @@ class MainWindow(QMainWindow):
     self.ui.distances.setMenu(distances)
     self.ui.distance.valueChanged.connect(self.ui.mashaBear.setDistance)
 
-    synchs = QMenu(self)
-    synchs.addAction('Seen in any', self.synchPicked)
-    synchs.addAction('Seen in all', self.synchPicked)
+    readMasha = QMenu(self)
+    readMasha.addAction('Seen in any', self.readMashaPicked)
+    readMasha.addAction('Seen in all', self.readMashaPicked)
     for nslt, desc in self.slitNames.items():
-      synchs.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
-                       desc, self.synchPicked)
-    self.ui.synchMasha.setMenu(synchs)
+      readMasha.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
+                          desc, self.readMashaPicked)
+    self.ui.readMasha.setMenu(readMasha)
+
+    syncBears = QMenu(self)
+    syncBears.addAction('All', self.syncBearsPicked)
+    for nslt, desc in self.slitNames.items():
+      syncBears.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
+                          desc, self.syncBearsPicked)
+    self.ui.syncBears.setMenu(readMasha)
 
     self.blMode.updated.connect(self.initMasha)
     for slt in self.ui.findChildren(Slits):
@@ -310,10 +317,24 @@ class MainWindow(QMainWindow):
     sndtxt = self.sender().text().replace('&', '')
     nslt = [ns for ns, desc in self.slitNames.items() if sndtxt == desc][0]
     self.ui.distance.setValue(self.bears[nslt].dist)
+    
+
+  @pyqtSlot()
+  def syncBearsPicked(self):
+    sndtxt = self.sender().text().replace('&', '')
+    bearL = [self.bears[ns]
+           for ns, desc in self.slitNames.items() if sndtxt == desc]
+    if not len(bearL): # all
+      for nslt in self.slitNames:
+        if self.synbts[nslt].isChecked():
+          bearL.append(self.bears[nslt])
+    dest = self.ui.mashaBear.posRBV()
+    for slt in bearL:
+      slt.onMoveOrder(dest)
 
 
   @pyqtSlot()
-  def synchPicked(self):
+  def readMashaPicked(self):
     sndtxt = self.sender().text().replace('&', '')
     posf = {}
     bearL = [self.bears[ns]
@@ -362,12 +383,9 @@ class MainWindow(QMainWindow):
     for nslt in self.slitNames:
       if self.synbts[nslt].isChecked():
         slt = self.bears[nslt]
-        if self.ui.driveAbs.isChecked():
-          slt.onMoveOrder(dest)
-        else:
-          sorig = slt.posRBV()
-          sdest = {rol : sorig[rol] + dest[rol] - orig[rol] for rol in MR}
-          slt.onMoveOrder(sdest)
+        sorig = slt.posRBV()
+        sdest = {rol : sorig[rol] + dest[rol] - orig[rol] for rol in MR}
+        slt.onMoveOrder(sdest)
 
 
   @pyqtSlot()
@@ -433,7 +451,6 @@ class MainWindow(QMainWindow):
 
     config.setValue('distance', self.ui.distance.value())
     config.setValue('tabbedui', self.ui.viewTab.isChecked())
-    config.setValue('driverel', self.ui.driveRel.isChecked())
 
     for nslt in self.slitNames:
       if self.synbts[nslt].isChecked():
@@ -479,8 +496,6 @@ class MainWindow(QMainWindow):
       self.ui.distance.setValue(float(config.value('distance')))
     if config.value('tabbedui') is not None:
       self.uiModeSwap(bool(config.value('tabbedui')))
-    if config.value('driverel') is not None:
-      self.showConfig(bool(config.value('driverel')))
 
     cfgprobs = []
     groups = config.childGroups()
