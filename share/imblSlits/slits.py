@@ -53,6 +53,11 @@ def pos2pos(pos) :
   fpos = pos.copy()
   return fpos if posFill(fpos) else None
 
+def printPos(pos) :
+  print('%3.3f x %3.3f %+3.3f %+3.3f | %+3.3f %+3.3f %+3.3f %+3.3f' % \
+    (pos[MR.HS], pos[MR.VS], pos[MR.HP], pos[MR.VP],
+     pos[MR.TP], pos[MR.LF], pos[MR.BT], pos[MR.RT]))
+
 
 class Face(QWidget):
 
@@ -128,7 +133,7 @@ class SlitsVis(QWidget) :
     pos = slt.posGLV() if slt.isMoving else slt.posDRV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38)), 0))
     painter.drawRect(QRectF(-pos[MR.LF], -pos[MR.BT], pos[MR.HS], pos[MR.VS]))
-
+    
     # read back geometry
     pos = slt.posRBV()
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(227,121,38,50)), 0))

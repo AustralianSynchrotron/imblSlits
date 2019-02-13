@@ -543,10 +543,6 @@ class MainWindow(QMainWindow):
 
 
 
-
-
-
-
 app = QApplication(sys.argv)
 
 my_mainWindow = MainWindow()
