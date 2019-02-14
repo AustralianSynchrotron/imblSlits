@@ -350,6 +350,9 @@
                    <property name="text">
                     <string>...</string>
                    </property>
+                   <property name="popupMode">
+                    <enum>QToolButton::InstantPopup</enum>
+                   </property>
                    <property name="arrowType">
                     <enum>Qt::DownArrow</enum>
                    </property>
@@ -466,6 +469,13 @@
                 <attribute name="buttonGroup">
                  <string notr="true">viewGroup</string>
                 </attribute>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="compact">
+                <property name="text">
+                 <string>Compact</string>
+                </property>
                </widget>
               </item>
               <item>

@@ -8,6 +8,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import epics
 
 binPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
@@ -27,6 +28,7 @@ def is_float(str):
 
 def filetitle(pth):
   return os.path.splitext(os.path.basename(pth))[0]
+
 
 class BLmode(QObject):
 
@@ -113,18 +115,21 @@ class MainWindow(QMainWindow):
   def __init__(self):
     super(MainWindow, self).__init__()
 
-    self.localDataDir   = QtCore.QStandardPaths.writableLocation(QtCore.QStandardPaths.AppDataLocation)
-    self.globalDataDirs = QtCore.QStandardPaths.standardLocations(QtCore.QStandardPaths.AppDataLocation)
+    self.localDataDir   = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
     os.makedirs(self.localDataDir, exist_ok=True)
     self.ui = loadUi(sharePath + 'imblSlits.ui', self)
+
+    self.layoutsOnStart = {}
+    for lay in self.ui.findChildren(QLayout):
+      self.layoutsOnStart[lay] = (lay.contentsMargins(), lay.spacing())
     
     prst = self.ui.preset
-    for ddir in self.globalDataDirs:
+    for ddir in QStandardPaths.standardLocations(QStandardPaths.AppDataLocation):
       for cfg in glob.glob(ddir + os.path.sep + '*.' + self.slitsExt):
         prst.addItem(filetitle(cfg), cfg)
-        prst.setItemData(prst.count()-1, cfg, QtCore.Qt.ToolTipRole)
+        prst.setItemData(prst.count()-1, cfg, Qt.ToolTipRole)
     prst.currentIndexChanged.connect(lambda idx: \
-      prst.setToolTip(prst.itemData(idx, QtCore.Qt.ToolTipRole)))
+      prst.setToolTip(prst.itemData(idx, Qt.ToolTipRole)))
 
     self.bears = {}
     self.synbts = {}
@@ -195,6 +200,13 @@ class MainWindow(QMainWindow):
     self.blMode.updated.connect(modeLabel.setText)
     self.ui.statusbar.addPermanentWidget(modeLabel)
 
+    def compactui(cmp):
+      for lay, stopt in self.layoutsOnStart.items():
+        lay.setContentsMargins(QMargins() if cmp else stopt[0])
+        lay.setSpacing(0 if cmp else stopt[1])
+      self.update()      
+    self.compact.toggled.connect(compactui)
+
     distances = QMenu(self)
     for nslt, desc in self.slitNames.items():
       distances.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
@@ -203,8 +215,10 @@ class MainWindow(QMainWindow):
     self.ui.distance.valueChanged.connect(self.ui.mashaBear.setDistance)
 
     readMasha = QMenu(self)
-    readMasha.addAction('Seen in any', self.readMashaPicked)
-    readMasha.addAction('Seen in all', self.readMashaPicked)
+    readMasha.addAction(QtGui.QIcon(sharePath+'union.svg'),
+                        'Union of all', self.readMashaPicked)
+    readMasha.addAction(QtGui.QIcon(sharePath+'intersect.svg'),
+                        'Intersection in all', self.readMashaPicked)
     for nslt, desc in self.slitNames.items():
       readMasha.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
                           desc, self.readMashaPicked)
@@ -215,13 +229,13 @@ class MainWindow(QMainWindow):
     for nslt, desc in self.slitNames.items():
       syncBears.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
                           desc, self.syncBearsPicked)
-    self.ui.syncBears.setMenu(readMasha)
+    self.ui.syncBears.setMenu(syncBears)
 
     self.blMode.updated.connect(self.initMasha)
     for slt in self.ui.findChildren(Slits):
       slt.changedConnection.connect(self.initMasha)
     self.blMode.updated.connect(self.updateBase)
-    QtCore.QTimer.singleShot(0, self.updateBase)
+    QTimer.singleShot(0, self.updateBase)
 
     self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
     self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
@@ -239,7 +253,7 @@ class MainWindow(QMainWindow):
       slt.changedConnection.connect(self.setMashaStatus)
       slt.changedMotion    .connect(self.setMashaStatus)
       slt.changedLimits    .connect(self.setMashaStatus)
-    QtCore.QTimer.singleShot(0, self.setMashaStatus)
+    QTimer.singleShot(0, self.setMashaStatus)
 
 
   @pyqtSlot()
@@ -285,7 +299,7 @@ class MainWindow(QMainWindow):
     for i in range(0, 10):
       QApplication.processEvents()
     if not toShow and self.ui.famWidget.isVisible():
-      QtCore.QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
+      QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
 
   @pyqtSlot()
@@ -309,7 +323,7 @@ class MainWindow(QMainWindow):
     layXF = eval('self.ui.layXrayFace'+wslt)
     layXF.layout().addWidget(self.ui.xrayFace)
     layXF.setMinimumSize(self.ui.xrayFace.minimumSize())
-    QtCore.QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
+    QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
 
   @pyqtSlot()
@@ -348,10 +362,10 @@ class MainWindow(QMainWindow):
           posS.append(self.bears[nslt].posDRV())
       if not len(posS):
         return
-      elif 'any' in sndtxt:
+      elif 'Union' in sndtxt:
         for rol in MR.LF, MR.RT, MR.TP, MR.BT:
           posf[rol] = max(pos[rol] for pos in posS)
-      elif 'all' in sndtxt:
+      elif 'Intersection' in sndtxt:
         for rol in MR.LF, MR.RT, MR.TP, MR.BT:
           posf[rol] = min(pos[rol] for pos in posS)
     self.ui.mashaBear.setPos(posf)
@@ -430,7 +444,7 @@ class MainWindow(QMainWindow):
     self.fileDir = os.path.dirname(fileName)
     if -1 == prst.findData(fileName):
       prst.addItem(filetitle(fileName), fileName)
-      prst.setItemData(prst.count()-1, fileName, QtCore.Qt.ToolTipRole)
+      prst.setItemData(prst.count()-1, fileName, Qt.ToolTipRole)
       prst.setCurrentIndex(prst.count()-1)
     return fileName
 
@@ -443,7 +457,7 @@ class MainWindow(QMainWindow):
     if not fileName:
       return
 
-    config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
+    config = QSettings(fileName, QSettings.IniFormat)
     if config is None or not config.isWritable():
       QMessageBox.warning(self, '',
         'Failed to open and/or save configuration to\n' + fileName)
@@ -486,7 +500,7 @@ class MainWindow(QMainWindow):
     if not fileName:
       return
 
-    config = QtCore.QSettings(fileName, QtCore.QSettings.IniFormat)
+    config = QSettings(fileName, QSettings.IniFormat)
     if config is None or config.status():
       QMessageBox.warning(self, '',
         'Failed to open and/or load configuration from\n' + fileName)
