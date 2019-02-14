@@ -199,8 +199,8 @@ class Slits(QWidget) :
     self.ui.face.setMinimumSize(minSide, minSide)
 
     for drv in self.drivers.values():
-      drv.vChng.connect(self.synchDrivers)
-      drv.goToP.connect(self.onMoveOrder)
+      drv.valueChanged.connect(self.synchDrivers)
+      drv.gotToPosition.connect(self.onMoveOrder)
       drv.setMinimumWidth(minDriverWidth)
       self.changedMotion.connect(drv.setDisabled)
 

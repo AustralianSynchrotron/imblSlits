@@ -14,7 +14,7 @@ binPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 sharePath = binPath + "../share/imblSlits/"
 sys.path.append(sharePath)
 
-from slits import Slits, MR, Face
+from slits import *
 
 
 def is_float(str):

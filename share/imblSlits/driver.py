@@ -8,8 +8,8 @@ execPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 
 class Driver(QWidget) :
 
-  goToP = pyqtSignal(float)
-  vChng = pyqtSignal(float)
+  gotToPosition = pyqtSignal(float)
+  valueChanged = pyqtSignal(float)
 
   warnSS='background-color: rgb(128, 0, 0);'
 
@@ -18,8 +18,8 @@ class Driver(QWidget) :
     self.ui = loadUi(execPath + 'driver.ui', self)
     self.ui.negative.clicked.connect(self.onArrowclick)
     self.ui.positive.clicked.connect(self.onArrowclick)
-    self.ui.position.valueEdited.connect(self.goToP)
-    self.ui.position.valueChanged.connect(self.vChng)
+    self.ui.position.valueEdited.connect(self.gotToPosition)
+    self.ui.position.valueChanged.connect(self.valueChanged)
     self.doublestep = False # sizes moves twice step
 
   @pyqtSlot(bool)
@@ -47,8 +47,8 @@ class Driver(QWidget) :
     cf = 1 if self.sender() is self.ui.positive else -1
     if self.doublestep:
       cf *= 2
-    self.setPos(self.pos() + cf*self.step())
-    self.goToP.emit(self.pos())
+    self.ui.position.setValue(self.pos() + cf*self.step())
+    self.gotToPosition.emit(self.pos())
     self.sender().clearFocus()
 
   def pos(self) :
