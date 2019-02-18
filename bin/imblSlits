@@ -132,19 +132,18 @@ class MainWindow(QMainWindow):
       prst.setToolTip(prst.itemData(idx, Qt.ToolTipRole)))
 
     self.bears = {}
-    self.synbts = {}
-    for nslt in self.slitNames:
-      self.bears[nslt] = eval('self.ui.'+nslt+'Bear')
-      self.synbts[nslt] = eval('self.ui.'+nslt+'Synch')
-
     for nslt, desc in self.slitNames.items():
-      self.bears[nslt].face.set(sharePath+nslt+'.png', desc)
-      self.synbts[nslt].setText(desc)
-      self.synbts[nslt].setIcon(QtGui.QIcon(sharePath+nslt+'.png'))
-    self.ui.mashaBear.face.set(sharePath+'masha.png', 'Detector')
+      slt = eval('self.ui.'+nslt+'Bear')
+      slt.face.set(sharePath+nslt+'.png', desc)
+      slt.willMoveNow.connect(self.onBearMove)
+      slt.changedConnection.connect(self.onStatusChange)
+      slt.changedMotion    .connect(self.onStatusChange)
+      slt.changedLimits    .connect(self.onStatusChange)
+      self.bears[nslt] = slt
+
     self.ui.xrayFace.set(sharePath+'xray.png', 'Config')
-    self.ui.xrayFace.setMinimumSize(self.ui.mashaBear.face.minimumSize())
-    self.ui.mashaBear.visual.heightChanged.connect(
+    self.ui.xrayFace.setMinimumSize(self.ui.pandaBear.face.minimumSize())
+    self.ui.pandaBear.visual.heightChanged.connect(
       self.ui.fakeSlitsVis.setMinimumHeight)
 
     tab = self.ui.tabWidget.tabBar()
@@ -154,6 +153,40 @@ class MainWindow(QMainWindow):
       if slt:
         slt.layFaceTab.layout().addWidget(slt.face)
         tab.setTabButton(itab,  QTabBar.LeftSide, slt.layFaceTab)
+
+    self.showcfg = QPushButton('', self)
+    self.showcfg.clicked.connect(self.showConfig)
+    self.ui.statusbar.addPermanentWidget(self.showcfg)
+    self.showConfig(False)
+
+    self.stopall = QPushButton('Stop all', self)
+    for slt in self.bears.values():
+      self.stopall.clicked.connect(slt.stop.clicked.emit)
+    self.ui.statusbar.addPermanentWidget(self.stopall,1)
+
+    self.ui.statusbar.addPermanentWidget(QLabel('Beamline mode: ', self))
+    modeLabel = QLabel(str(self.blMode), self)
+    self.blMode.updated.connect(modeLabel.setText)
+    self.ui.statusbar.addPermanentWidget(modeLabel)
+    self.blMode.updated.connect(self.updateBase)
+    QTimer.singleShot(0, self.updateBase)
+
+    def compactui(cmp):
+      for lay, stopt in self.layoutsOnStart.items():
+        lay.setContentsMargins(QMargins() if cmp else stopt[0])
+        lay.setSpacing(0 if cmp else stopt[1])
+      self.update()      
+    self.compact.toggled.connect(compactui)
+
+    self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
+    self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
+    self.uiModeSwap(True)
+
+    self.ui.save.clicked.connect(self.onSave)
+    self.ui.load.clicked.connect(self.onLoad)
+
+    self.ui.goWhite.clicked.connect(self.moveToBlMode)
+    self.ui.goMono .clicked.connect(self.moveToBlMode)
 
     self.ui.pandaBear.setDistance(14)
     self.ui.pandaBear.setMotors({MR.VP : 'SR08ID01SLW01:VPOS',
@@ -189,72 +222,6 @@ class MainWindow(QMainWindow):
                                   (MR.RT, 'SR08ID01SLM03:RIGHT'),
                                   'SR08ID01SLM03:ROTARYARM'])
 
-    self.showcfg = QPushButton('', self)
-    self.showcfg.clicked.connect(self.showConfig)
-    self.ui.statusbar.addPermanentWidget(self.showcfg)
-    self.ui.statusbar.addPermanentWidget(QWidget(), 1)
-    self.showConfig(False)
-
-    self.ui.statusbar.addPermanentWidget(QLabel('Beamline mode: ', self))
-    modeLabel = QLabel(str(self.blMode), self)
-    self.blMode.updated.connect(modeLabel.setText)
-    self.ui.statusbar.addPermanentWidget(modeLabel)
-
-    def compactui(cmp):
-      for lay, stopt in self.layoutsOnStart.items():
-        lay.setContentsMargins(QMargins() if cmp else stopt[0])
-        lay.setSpacing(0 if cmp else stopt[1])
-      self.update()      
-    self.compact.toggled.connect(compactui)
-
-    distances = QMenu(self)
-    for nslt, desc in self.slitNames.items():
-      distances.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
-                          desc, self.distancePicked)
-    self.ui.distances.setMenu(distances)
-    self.ui.distance.valueChanged.connect(self.ui.mashaBear.setDistance)
-
-    readMasha = QMenu(self)
-    readMasha.addAction(QtGui.QIcon(sharePath+'union.svg'),
-                        'Union of all', self.readMashaPicked)
-    readMasha.addAction(QtGui.QIcon(sharePath+'intersect.svg'),
-                        'Intersection in all', self.readMashaPicked)
-    for nslt, desc in self.slitNames.items():
-      readMasha.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
-                          desc, self.readMashaPicked)
-    self.ui.readMasha.setMenu(readMasha)
-
-    syncBears = QMenu(self)
-    syncBears.addAction('All', self.syncBearsPicked)
-    for nslt, desc in self.slitNames.items():
-      syncBears.addAction(QtGui.QIcon(sharePath+nslt+'.png'),
-                          desc, self.syncBearsPicked)
-    self.ui.syncBears.setMenu(syncBears)
-
-    self.blMode.updated.connect(self.initMasha)
-    for slt in self.ui.findChildren(Slits):
-      slt.changedConnection.connect(self.initMasha)
-    self.blMode.updated.connect(self.updateBase)
-    QTimer.singleShot(0, self.updateBase)
-
-    self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
-    self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
-    self.uiModeSwap(True)
-
-    self.ui.save.clicked.connect(self.onSave)
-    self.ui.load.clicked.connect(self.onLoad)
-
-    self.ui.goWhite.clicked.connect(self.moveToBlMode)
-    self.ui.goMono .clicked.connect(self.moveToBlMode)
-
-    self.ui.mashaBear.willMoveNow.connect(self.onMashaMove)
-    for slt in self.bears.values():
-      self.ui.mashaBear.ui.stop.clicked.connect(slt.stop.clicked.emit)
-      slt.changedConnection.connect(self.setMashaStatus)
-      slt.changedMotion    .connect(self.setMashaStatus)
-      slt.changedLimits    .connect(self.setMashaStatus)
-    QTimer.singleShot(0, self.setMashaStatus)
-
 
   @pyqtSlot()
   def updateBase(self):
@@ -265,14 +232,12 @@ class MainWindow(QMainWindow):
   def moveToBlMode(self):
     if self.sender() not in (self.ui.goWhite, self.ui.goMono):
       return
-    for nslt in self.slitNames:
-      slt = self.bears[nslt]
-      if self.synbts[nslt].isChecked() and slt.baseMotor is not None:
+    for slt in self.bears.values():
+      if slt.inFamily() and slt.baseMotor is not None:
         if self.ui.driveAbs.isChecked():
           slt.baseMotor.goUserPosition(0 if self.sender() is self.ui.goWhite else 20)
         else:
           slt.baseMotor.goRelative(-20 if self.sender() is self.ui.goWhite else 20)
-
 
 
   @pyqtSlot()
@@ -311,7 +276,6 @@ class MainWindow(QMainWindow):
 
     wslt = 'Tab' if toTab else 'Fam'
 
-    eval('self.ui.masha'+wslt).layout().addWidget(self.ui.masha)
     eval('self.ui.config'+wslt).layout().addWidget(self.ui.config)
     for nslt in self.slitNames:
       eval('self.ui.'+nslt+wslt).layout().addWidget(eval('self.ui.'+nslt))
@@ -326,84 +290,17 @@ class MainWindow(QMainWindow):
     QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
 
-  @pyqtSlot()
-  def distancePicked(self):
-    sndtxt = self.sender().text().replace('&', '')
-    nslt = [ns for ns, desc in self.slitNames.items() if sndtxt == desc][0]
-    self.ui.distance.setValue(self.bears[nslt].dist)
-    
-
-  @pyqtSlot()
-  def syncBearsPicked(self):
-    sndtxt = self.sender().text().replace('&', '')
-    bearL = [self.bears[ns]
-           for ns, desc in self.slitNames.items() if sndtxt == desc]
-    if not len(bearL): # all
-      for nslt in self.slitNames:
-        if self.synbts[nslt].isChecked():
-          bearL.append(self.bears[nslt])
-    dest = self.ui.mashaBear.posRBV()
-    for slt in bearL:
-      slt.onMoveOrder(dest)
-
-
-  @pyqtSlot()
-  def readMashaPicked(self):
-    sndtxt = self.sender().text().replace('&', '')
-    posf = {}
-    bearL = [self.bears[ns]
-             for ns, desc in self.slitNames.items() if sndtxt == desc]
-    if len(bearL):
-      posf = bearL[0].posDRV()
-    else:
-      posS = []
-      for nslt in self.slitNames:
-        if self.synbts[nslt].isChecked():
-          posS.append(self.bears[nslt].posDRV())
-      if not len(posS):
-        return
-      elif 'Union' in sndtxt:
-        for rol in MR.LF, MR.RT, MR.TP, MR.BT:
-          posf[rol] = max(pos[rol] for pos in posS)
-      elif 'Intersection' in sndtxt:
-        for rol in MR.LF, MR.RT, MR.TP, MR.BT:
-          posf[rol] = min(pos[rol] for pos in posS)
-    self.ui.mashaBear.setPos(posf)
-
-
-  @pyqtSlot()
-  def initMasha(self):
-
-    def execonmod(slt):
-      if slt.isConnected:
-        self.ui.distance.setValue(slt.dist)
-        self.ui.mashaBear.setPos(slt.posDRV())
-        self.ui.mashaBear.ui.step.setValue(slt.ui.step.value())
-        self.mashainited = True
-
-    encl = self.blMode.encl()
-    if hasattr(self, 'mashainited') or encl is BLmode.Encl.NONE:
-      return
-    elif encl is BLmode.Encl.MOD1:
-      execonmod(self.ui.babyBear)
-    elif encl is BLmode.Encl.MOD2:
-      execonmod(self.ui.mamaBear)
-    elif encl is BLmode.Encl.MOD3:
-      execonmod(self.ui.papaBear)
-
-
   @pyqtSlot(dict, dict)
-  def onMashaMove(self, orig, dest):
-    for nslt in self.slitNames:
-      if self.synbts[nslt].isChecked():
-        slt = self.bears[nslt]
+  def onBearMove(self, orig, dest):
+    for slt in self.bears.values():
+      if slt is not self.sender() and slt.inFamily():
         sorig = slt.posRBV()
         sdest = {rol : sorig[rol] + dest[rol] - orig[rol] for rol in MR}
         slt.onMoveOrder(sdest)
 
 
   @pyqtSlot()
-  def setMashaStatus(self):
+  def onStatusChange(self):
     connected = True
     moving = False
     limit = False
@@ -415,8 +312,9 @@ class MainWindow(QMainWindow):
     self.ui.goMono .setEnabled(connected and not moving)
     self.ui.save   .setEnabled(connected and not moving)
     self.ui.load   .setEnabled(connected and not moving)
-    self.ui.mashaBear.onStatusChange(connected, moving, limit)
-
+    self.stopall.setEnabled(moving)
+    self.stopall.setStyleSheet('background-color: rgb(128, 0, 0);' if moving else '')
+    
   
   def _fileSaveLoad(self, fileName, forsave):
     prst = self.ui.preset
@@ -467,9 +365,9 @@ class MainWindow(QMainWindow):
     config.setValue('tabbedui', self.ui.viewTab.isChecked())
 
     for nslt in self.slitNames:
-      if self.synbts[nslt].isChecked():
+      slt = self.bears[nslt]
+      if slt.inFamily():
         config.beginGroup(nslt)
-        slt = self.bears[nslt]
 
         def motcfg(mot):
           return mot.getPv() + ' ' + str(mot.getUserPosition())

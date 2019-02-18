@@ -61,6 +61,14 @@ def printPos(pos) :
 
 class Face(QWidget):
 
+  class QSCheckBox(QtWidgets.QCheckBox):
+    def hitButton(self, pos):
+      opt = QtWidgets.QStyleOptionButton()
+      self.initStyleOption(opt)
+      rect = self.style().subElementRect(QtWidgets.QStyle.SE_CheckBoxIndicator, opt)
+      return rect.contains(pos)
+
+
   def __init__(self, parent):
     super(Face, self).__init__(parent)
     lyt = QtWidgets.QVBoxLayout(self)
@@ -68,16 +76,14 @@ class Face(QWidget):
     lyt.setSpacing(0)
     self.labImg = QtWidgets.QLabel(self)
     lyt.addWidget(self.labImg)
-    self.labTxt = QtWidgets.QLabel(self)
-    szpol = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-    self.labTxt.setSizePolicy(szpol)
-    lyt.addWidget(self.labTxt)
-    lyt.setAlignment(self.labTxt, QtCore.Qt.AlignHCenter)
+    self.labBut = self.QSCheckBox(self)
+    self.labBut.setChecked(True)
+    lyt.addWidget(self.labBut)
+
 
   def set(self, image, text):
     self.labImg.setStyleSheet('image: url(' + image + ');')
-    self.labTxt.setText(text)
-
+    self.labBut.setText(text)
 
 
 
@@ -89,7 +95,6 @@ class SlitsVis(QWidget) :
   heightChanged = pyqtSignal(int)
 
   def __init__(self, parent):
-
     super(SlitsVis, self).__init__(parent) # parent is supposed to be Slits
     self.setMinimumWidth(100)
     self.setMinimumHeight( self.minimumWidth() * self.beamVh / self.beamVw )
@@ -296,7 +301,8 @@ class Slits(QWidget) :
       dest = self.posDRV()
     else :
       posFill(dest)
-    self.willMoveNow.emit(orig, dest)
+    if self.sender()  and  self.sender().parent() is self  and  self.inFamily():
+      self.willMoveNow.emit(orig, dest)
     if not len(self.motors) :
       self.motGeom = dest
     else :
@@ -370,7 +376,7 @@ class Slits(QWidget) :
       self.ui.limitW.setVisible(self.isOnLimit)
       self.changedLimits.emit(self.isOnLimit)
 
-    self.face.labTxt.setStyleSheet(
+    self.face.labBut.setStyleSheet(
       self.warnSS \
         if not self.isConnected else \
       'color: rgb(128, 0, 0);' \
@@ -404,6 +410,11 @@ class Slits(QWidget) :
       self.drivers[MR.LF].setPos(hs/2 - hp)
 
     self.changedGeometry.emit()
+
+
+  def inFamily(self):
+    return self.ui.face.labBut.isChecked()
+
 
 
 
