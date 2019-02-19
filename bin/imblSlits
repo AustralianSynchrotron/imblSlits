@@ -28,10 +28,6 @@ def is_float(str):
     return False
 
 
-def filetitle(pth):
-  return os.path.splitext(os.path.basename(pth))[0]
-
-
 class BLmode(QObject):
 
   class Encl(Enum):
@@ -123,7 +119,8 @@ class MainWindow(QMainWindow):
     prst = self.ui.preset
     for ddir in QStandardPaths.standardLocations(QStandardPaths.AppDataLocation):
       for cfg in glob.glob(ddir + os.path.sep + '*.' + self.slitsExt):
-        prst.addItem(filetitle(cfg), cfg)
+        ttl = os.path.basename(cfg)[:-len(self.slitsExt)-1]
+        prst.addItem(ttl, cfg)
         prst.setItemData(prst.count()-1, cfg, Qt.ToolTipRole)
     prst.currentIndexChanged.connect(lambda idx: \
       prst.setToolTip(prst.itemData(idx, Qt.ToolTipRole)))
@@ -397,6 +394,12 @@ class MainWindow(QMainWindow):
 
     self.uiModeSwap('UITAB' in ldout)
     self.uiCompact('UICOMPACT' in ldout)
+
+    for slt in Slits.family:
+      active = True
+      for mot in slt.motors.values():
+        active &= mot.getPv() in ldout
+      slt.setActive(active)
 
 
 

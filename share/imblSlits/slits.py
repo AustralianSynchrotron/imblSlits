@@ -499,6 +499,10 @@ class Slits(QWidget) :
     return self.ui.face.labBut.isChecked()
 
 
+  def setActive(self, actv):
+    self.ui.face.labBut.setChecked(actv)
+
+
 
 
 
