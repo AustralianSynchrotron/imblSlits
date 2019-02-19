@@ -343,7 +343,8 @@ class MainWindow(QMainWindow):
       return None
     self.fileDir = os.path.dirname(fileName)
     if -1 == prst.findData(fileName):
-      prst.addItem(filetitle(fileName), fileName)
+      ttl = os.path.basename(fileName)[:-len(self.slitsExt)-1]
+      prst.addItem(ttl, fileName)
       prst.setItemData(prst.count()-1, fileName, Qt.ToolTipRole)
       prst.setCurrentIndex(prst.count()-1)
     return fileName
