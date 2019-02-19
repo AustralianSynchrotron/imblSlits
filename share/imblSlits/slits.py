@@ -1,9 +1,8 @@
 import sys, os, copy
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QLineF, QRectF
+from PyQt5 import QtWidgets, QtCore, QtGui, uic
 from PyQt5.QtGui import  QPen, QBrush, QColor
-from PyQt5.uic import loadUi
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 from enum import Enum, auto
 from qcamotorgui import QCaMotorGUI
 
@@ -53,38 +52,58 @@ def pos2pos(pos) :
   fpos = pos.copy()
   return fpos if posFill(fpos) else None
 
-def printPos(pos) :
-  print('%3.3f x %3.3f %+3.3f %+3.3f | %+3.3f %+3.3f %+3.3f %+3.3f' % \
-    (pos[MR.HS], pos[MR.VS], pos[MR.HP], pos[MR.VP],
-     pos[MR.TP], pos[MR.LF], pos[MR.BT], pos[MR.RT]))
+def pos2str(pos):
+  return \
+    '%3.3f x %3.3f %+3.3f %+3.3f | %+3.3f %+3.3f %+3.3f %+3.3f' % \
+      (pos[MR.HS], pos[MR.VS], pos[MR.HP], pos[MR.VP],
+       pos[MR.TP], pos[MR.LF], pos[MR.BT], pos[MR.RT])
 
 
 class Face(QWidget):
 
-  class QSCheckBox(QtWidgets.QCheckBox):
+
+  # name of this object is the integer number holding minimum width of the faces
+  dirtyHack = QObject()
+  dirtyHack.setObjectName('0')
+
+  
+  class QSCheckBox(QCheckBox):
     def hitButton(self, pos):
-      opt = QtWidgets.QStyleOptionButton()
+      opt = QStyleOptionButton()
       self.initStyleOption(opt)
-      rect = self.style().subElementRect(QtWidgets.QStyle.SE_CheckBoxIndicator, opt)
+      rect = self.style().subElementRect(QStyle.SE_CheckBoxIndicator, opt)
       return rect.contains(pos)
 
 
   def __init__(self, parent):
     super(Face, self).__init__(parent)
-    lyt = QtWidgets.QVBoxLayout(self)
+    lyt = QVBoxLayout(self)
     lyt.setContentsMargins(0, 0, 0, 0)
     lyt.setSpacing(0)
-    self.labImg = QtWidgets.QLabel(self)
+    self.labImg = QLabel(self)
     lyt.addWidget(self.labImg)
-    self.labBut = self.QSCheckBox(self)
-    self.labBut.setChecked(True)
+    self.labBut = None
+    if type(parent.parent()) is Slits:
+      self.labBut = self.QSCheckBox(self)
+      self.labBut.setChecked(True)
+    else:
+      self.labBut = QLabel(self)
+      self.labBut.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+      self.labBut.setAlignment(Qt.AlignCenter)
     lyt.addWidget(self.labBut)
+    self.dirtyHack.objectNameChanged.connect(
+      lambda x: self.labBut.setMinimumWidth(int(x)))
 
 
   def set(self, image, text):
-    self.labImg.setStyleSheet('image: url(' + image + ');')
+    self.image = image
+    self.labImg.setStyleSheet('image: url(' + filePath + self.image + ');')
     self.labBut.setText(text)
-
+    myMinWidth = self.labBut.minimumSizeHint().width()
+    if myMinWidth > int(self.dirtyHack.objectName()):
+      self.dirtyHack.setObjectName(str(myMinWidth))
+    else:
+      self.labBut.setMinimumWidth(int(self.dirtyHack.objectName()))
 
 
 class SlitsVis(QWidget) :
@@ -98,7 +117,7 @@ class SlitsVis(QWidget) :
     super(SlitsVis, self).__init__(parent) # parent is supposed to be Slits
     self.setMinimumWidth(100)
     self.setMinimumHeight( self.minimumWidth() * self.beamVh / self.beamVw )
-    szpol = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+    szpol = QSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
     szpol.setHeightForWidth(True)
     self.setSizePolicy(szpol)
 
@@ -130,7 +149,7 @@ class SlitsVis(QWidget) :
 
     # coordinates
     painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(255,255,255)),
-                              0, QtCore.Qt.DotLine))
+                              0, Qt.DotLine))
     painter.drawLine(QLineF(-fw2, 0,    fw2, 0  ))
     painter.drawLine(QLineF(0,    -fh2, 0,   fh2))
 
@@ -161,11 +180,14 @@ class Slits(QWidget) :
   changedGeometry   = pyqtSignal()
   willMoveNow       = pyqtSignal(dict, dict) # from, to
 
+  family = []
+
 
   def __init__(self, parent):
     super(Slits, self).__init__(parent)
-    self.ui = loadUi(filePath + 'slits.ui', self)
-
+    self.family.append(self)
+    self.ui = uic.loadUi(filePath + 'slits.ui', self)
+    
     self.ui.sd2.clicked.connect(lambda: self.ui.step.setValue(self.ui.step.value() / 2))
     self.ui.sd0.clicked.connect(lambda: self.ui.step.setValue(self.ui.step.value() / 10))
     self.ui.sm2.clicked.connect(lambda: self.ui.step.setValue(self.ui.step.value() * 2))
@@ -199,7 +221,7 @@ class Slits(QWidget) :
     for rol in MR:
       self.drivers[rol] = eval('self.ui.d'+rol.name)
 
-    minDriverWidth = self.ui.stepWidget.sizeHint().width()
+    minDriverWidth = self.ui.dHP.sizeHint().width()
     minSide = min(minDriverWidth, self.ui.dVP.sizeHint().height())
     self.ui.face.setMinimumSize(minSide, minSide)
 
@@ -217,6 +239,66 @@ class Slits(QWidget) :
     self.ui.limitW.hide()
 
     self.ui.changedGeometry.connect(self.ui.visual.update)
+
+
+  def knowTheFamily(self):
+
+    applyToMenu = QMenu(self)
+    applyToMenu.addAction('All selected', self.applyToPicked)
+    for slt in self.family:
+      if slt is not self:
+        applyToMenu.addAction(QtGui.QIcon(filePath + slt.face.image),
+                              slt.face.labBut.text(), self.applyToPicked)
+    self.ui.applyTo.setMenu(applyToMenu)
+    
+    moveToMenu = QMenu(self)
+    moveToMenu.addAction(QtGui.QIcon(filePath+'union.svg'),
+                         'Union of all', self.moveToPicked)
+    moveToMenu.addAction(QtGui.QIcon(filePath+'intersect.svg'),
+                        'Intersection in all', self.moveToPicked)
+    for slt in self.family:
+      if slt is not self:
+        moveToMenu.addAction(QtGui.QIcon(filePath + slt.face.image),
+                             slt.face.labBut.text(), self.moveToPicked)
+    self.ui.moveTo.setMenu(moveToMenu)
+
+
+  @pyqtSlot()
+  def applyToPicked(self):
+    sndtxt = self.sender().text().replace('&', '')
+    pos = self.posGLV()
+    for slt in self.family:
+      moveit  = 'All selected' in sndtxt and slt.isActive()
+      moveit |= slt.face.labBut.text() == sndtxt
+      moveit &= slt is not self 
+      if moveit:
+        slt.onMoveOrder(pos)
+
+
+  @pyqtSlot()
+  def moveToPicked(self):
+
+    sndtxt = self.sender().text().replace('&', '')
+    posS = []
+
+    for slt in self.family:
+      pos = slt.posGLV()
+      if slt.face.labBut.text() == sndtxt:
+        self.onMoveOrder(pos)
+        return
+      elif slt.isActive():
+        posS.append(pos)
+
+    pos = {}
+    if not len(posS):
+      return
+    elif 'Union' in sndtxt:
+      for rol in MR.LF, MR.RT, MR.TP, MR.BT:
+        pos[rol] = max(ps[rol] for ps in posS)
+    elif 'Intersection' in sndtxt:
+      for rol in MR.LF, MR.RT, MR.TP, MR.BT:
+        pos[rol] = min(ps[rol] for ps in posS)
+    self.onMoveOrder(pos)    
 
 
   def setMotors(self, motors, baseMotorPV=None, additionalMotors=[]) :
@@ -301,7 +383,8 @@ class Slits(QWidget) :
       dest = self.posDRV()
     else :
       posFill(dest)
-    if self.sender()  and  self.sender().parent() is self  and  self.inFamily():
+    if self.sender()  and  self.sender().parent() is self \
+       and  self.isActive()  and  type(self.sender()) is Driver:
       self.willMoveNow.emit(orig, dest)
     if not len(self.motors) :
       self.motGeom = dest
@@ -412,7 +495,7 @@ class Slits(QWidget) :
     self.changedGeometry.emit()
 
 
-  def inFamily(self):
+  def isActive(self):
     return self.ui.face.labBut.isChecked()
 
 

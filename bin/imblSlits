@@ -2,14 +2,16 @@
 
 import sys
 import os
+import stat
 import glob
+import subprocess
+import epics
+import sip
+
 from enum import Enum
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
-from PyQt5.uic import loadUi
+from PyQt5 import QtWidgets, QtCore, QtGui, uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-import epics
 
 binPath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 sharePath = binPath + "../share/imblSlits/"
@@ -104,20 +106,15 @@ class BLmode(QObject):
 
 class MainWindow(QMainWindow):
 
-  slitsExt = 'slits'
+  slitsExt = 'slits.sh'
   blMode = BLmode()
-  slitNames = {'panda': 'HHLS',
-               'baby' : 'Baby bear',
-               'mama' : 'Mama bear',
-               'papa' : 'Papa bear'}
-
 
   def __init__(self):
     super(MainWindow, self).__init__()
 
     self.localDataDir   = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
     os.makedirs(self.localDataDir, exist_ok=True)
-    self.ui = loadUi(sharePath + 'imblSlits.ui', self)
+    self.ui = uic.loadUi(sharePath + 'imblSlits.ui', self)
 
     self.layoutsOnStart = {}
     for lay in self.ui.findChildren(QLayout):
@@ -130,21 +127,18 @@ class MainWindow(QMainWindow):
         prst.setItemData(prst.count()-1, cfg, Qt.ToolTipRole)
     prst.currentIndexChanged.connect(lambda idx: \
       prst.setToolTip(prst.itemData(idx, Qt.ToolTipRole)))
+      
+    self.ui.papa .face.set('papa.png' , 'Papa bear')
+    self.ui.mama .face.set('mama.png' , 'Mama bear')
+    self.ui.baby .face.set('baby.png' , 'Baby bear')
+    self.ui.panda.face.set('panda.png', 'HHLS'     )
 
-    self.bears = {}
-    for nslt, desc in self.slitNames.items():
-      slt = eval('self.ui.'+nslt+'Bear')
-      slt.face.set(sharePath+nslt+'.png', desc)
+    for slt in Slits.family:
       slt.willMoveNow.connect(self.onBearMove)
       slt.changedConnection.connect(self.onStatusChange)
       slt.changedMotion    .connect(self.onStatusChange)
       slt.changedLimits    .connect(self.onStatusChange)
-      self.bears[nslt] = slt
-
-    self.ui.xrayFace.set(sharePath+'xray.png', 'Config')
-    self.ui.xrayFace.setMinimumSize(self.ui.pandaBear.face.minimumSize())
-    self.ui.pandaBear.visual.heightChanged.connect(
-      self.ui.fakeSlitsVis.setMinimumHeight)
+      slt.knowTheFamily()
 
     tab = self.ui.tabWidget.tabBar()
     tab.setExpanding(True)
@@ -152,32 +146,31 @@ class MainWindow(QMainWindow):
       slt = self.ui.tabWidget.widget(itab).findChild(Slits)
       if slt:
         slt.layFaceTab.layout().addWidget(slt.face)
-        tab.setTabButton(itab,  QTabBar.LeftSide, slt.layFaceTab)
+        tab.setTabButton(itab, QTabBar.LeftSide, slt.layFaceTab)
+    
+    self.ui.xrayFace.set('masha.png', 'Config')
+    self.ui.xrayFace.setMinimumSize(self.ui.panda.face.minimumSize())
+    self.ui.panda.visual.heightChanged.connect(
+      self.ui.fakeSlitsVis.setMinimumHeight)      
 
-    self.showcfg = QPushButton('', self)
+    self.showcfg = QPushButton(QtGui.QIcon(sharePath+'masha.png'), '', self)
     self.showcfg.clicked.connect(self.showConfig)
     self.ui.statusbar.addPermanentWidget(self.showcfg)
     self.showConfig(False)
 
     self.stopall = QPushButton('Stop all', self)
-    for slt in self.bears.values():
+    for slt in Slits.family:
       self.stopall.clicked.connect(slt.stop.clicked.emit)
     self.ui.statusbar.addPermanentWidget(self.stopall,1)
 
-    self.ui.statusbar.addPermanentWidget(QLabel('Beamline mode: ', self))
+    self.ui.statusbar.addPermanentWidget(QLabel('Mode: ', self))
     modeLabel = QLabel(str(self.blMode), self)
     self.blMode.updated.connect(modeLabel.setText)
     self.ui.statusbar.addPermanentWidget(modeLabel)
     self.blMode.updated.connect(self.updateBase)
     QTimer.singleShot(0, self.updateBase)
 
-    def compactui(cmp):
-      for lay, stopt in self.layoutsOnStart.items():
-        lay.setContentsMargins(QMargins() if cmp else stopt[0])
-        lay.setSpacing(0 if cmp else stopt[1])
-      self.update()      
-    self.compact.toggled.connect(compactui)
-
+    self.ui.compact.toggled.connect(self.uiCompact)
     self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
     self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
     self.uiModeSwap(True)
@@ -188,56 +181,63 @@ class MainWindow(QMainWindow):
     self.ui.goWhite.clicked.connect(self.moveToBlMode)
     self.ui.goMono .clicked.connect(self.moveToBlMode)
 
-    self.ui.pandaBear.setDistance(14)
-    self.ui.pandaBear.setMotors({MR.VP : 'SR08ID01SLW01:VPOS',
-                                 MR.VS : 'SR08ID01SLW01:VOPEN',
-                                 MR.LF : 'SR08ID01SLW01:RIGHT', # left/right are swapped
-                                 MR.RT : 'SR08ID01SLW01:LEFT'})
+    self.ui.panda.setDistance(14)
+    self.ui.panda.setMotors({MR.VP : 'SR08ID01SLW01:VPOS',
+                             MR.VS : 'SR08ID01SLW01:VOPEN',
+                             MR.LF : 'SR08ID01SLW01:RIGHT', # left/right are swapped
+                             MR.RT : 'SR08ID01SLW01:LEFT'})
 
-    self.ui. babyBear.setDistance(20)
-    self.ui. babyBear.setMotors({MR.VP : 'SR08ID01SLM12:VCENTRE',
-                                 MR.VS : 'SR08ID01SLM12:VSIZE',
-                                 MR.HP : 'SR08ID01SLM12:HCENTRE',
-                                 MR.HS : 'SR08ID01SLM12:HSIZE'},
-                                'SR08ID01SLM12:VCENTRE',
-                                [(MR.LF, 'SR08ID01SLM12:IN'),
-                                 (MR.RT, 'SR08ID01SLM12:OUT'),
-                                 (MR.BT, 'SR08ID01SLM12:BOT'),
-                                 (MR.TP, 'SR08ID01SLM12:TOP')])
+    self.ui. baby.setDistance(20)
+    self.ui. baby.setMotors({MR.VP : 'SR08ID01SLM12:VCENTRE',
+                             MR.VS : 'SR08ID01SLM12:VSIZE',
+                             MR.HP : 'SR08ID01SLM12:HCENTRE',
+                             MR.HS : 'SR08ID01SLM12:HSIZE'},
+                            'SR08ID01SLM12:VCENTRE',
+                            [(MR.LF, 'SR08ID01SLM12:IN'),
+                             (MR.RT, 'SR08ID01SLM12:OUT'),
+                             (MR.BT, 'SR08ID01SLM12:BOT'),
+                             (MR.TP, 'SR08ID01SLM12:TOP')])
 
-    self.ui. mamaBear.setDistance(31)
-    self.ui. mamaBear.setMotors({MR.VP : 'SR08ID01SLM21:Z',
-                                 MR.VS : 'SR08ID01SLM21:ZGAP',
-                                 MR.HP : 'SR08ID01SLM21:Y',
-                                 MR.HS : 'SR08ID01SLM21:YGAP'},
-                                'SR08ID01TBL21:Z')
+    self.ui. mama.setDistance(31)
+    self.ui. mama.setMotors({MR.VP : 'SR08ID01SLM21:Z',
+                             MR.VS : 'SR08ID01SLM21:ZGAP',
+                             MR.HP : 'SR08ID01SLM21:Y',
+                             MR.HS : 'SR08ID01SLM21:YGAP'},
+                            'SR08ID01TBL21:Z')
 
-    self.ui.papaBear.setDistance(136)
-    self.ui.papaBear.setMotors(  {MR.VP : 'SR08ID01SLM03:ZCENTRE',
-                                  MR.VS : 'SR08ID01SLM03:ZGAP',
-                                  MR.HP : 'SR08ID01SLM03:YCENTRE',
-                                  MR.HS : 'SR08ID01SLM03:YGAP'},
-                                 'SR08ID01SLM03:ZCENTRE',
-                                 [(MR.LF, 'SR08ID01SLM03:LEFT'),
-                                  (MR.RT, 'SR08ID01SLM03:RIGHT'),
-                                  'SR08ID01SLM03:ROTARYARM'])
+    self.ui.papa.setDistance(136)
+    self.ui.papa.setMotors(  {MR.VP : 'SR08ID01SLM03:ZCENTRE',
+                              MR.VS : 'SR08ID01SLM03:ZGAP',
+                              MR.HP : 'SR08ID01SLM03:YCENTRE',
+                              MR.HS : 'SR08ID01SLM03:YGAP'},
+                             'SR08ID01SLM03:ZCENTRE',
+                             [(MR.LF, 'SR08ID01SLM03:LEFT'),
+                              (MR.RT, 'SR08ID01SLM03:RIGHT'),
+                              'SR08ID01SLM03:ROTARYARM'])
 
 
   @pyqtSlot()
   def updateBase(self):
-    for slt in self.bears.values():
+    for slt in Slits.family:
       slt.setBase(20 if self.blMode.shut() == BLmode.Shut.MONO else 0)
 
 
   def moveToBlMode(self):
     if self.sender() not in (self.ui.goWhite, self.ui.goMono):
       return
-    for slt in self.bears.values():
-      if slt.inFamily() and slt.baseMotor is not None:
+    for slt in Slits.family:
+      if slt.isActive() and slt.baseMotor is not None:
         if self.ui.driveAbs.isChecked():
           slt.baseMotor.goUserPosition(0 if self.sender() is self.ui.goWhite else 20)
         else:
           slt.baseMotor.goRelative(-20 if self.sender() is self.ui.goWhite else 20)
+
+  
+  @pyqtSlot()
+  def updateSizes(self):
+    for i in range(0, 10):
+      QApplication.processEvents()
+    QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
 
 
   @pyqtSlot()
@@ -261,13 +261,10 @@ class MainWindow(QMainWindow):
       self.ui.config.layout().addWidget(self.ui.layXrayFaceTab)  # to keep from delete
       tbwg.removeTab(tbwg.count()-1)
     self.configFam.setVisible(toShow)
-    for i in range(0, 10):
-      QApplication.processEvents()
-    if not toShow and self.ui.famWidget.isVisible():
-      QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
+    QTimer.singleShot(0, self.updateSizes)
 
 
-  @pyqtSlot()
+  @pyqtSlot(bool)
   def uiModeSwap(self, toTab):
 
     (self.ui.viewTab if toTab else self.ui.viewFam).setChecked(True)
@@ -277,9 +274,8 @@ class MainWindow(QMainWindow):
     wslt = 'Tab' if toTab else 'Fam'
 
     eval('self.ui.config'+wslt).layout().addWidget(self.ui.config)
-    for nslt in self.slitNames:
-      eval('self.ui.'+nslt+wslt).layout().addWidget(eval('self.ui.'+nslt))
-    for slt in self.ui.findChildren(Slits):
+    for slt in Slits.family:
+      eval('self.ui.'+slt.objectName()+wslt).layout().addWidget(slt)
       eval('slt.layFace'+wslt).layout().addWidget(slt.face)
 
     self.ui.fakeSlitsVis.setVisible(not toTab)
@@ -287,13 +283,22 @@ class MainWindow(QMainWindow):
     layXF = eval('self.ui.layXrayFace'+wslt)
     layXF.layout().addWidget(self.ui.xrayFace)
     layXF.setMinimumSize(self.ui.xrayFace.minimumSize())
-    QTimer.singleShot(0, (lambda: self.resize(self.minimumSizeHint())))
+    QTimer.singleShot(0, self.updateSizes)
+
+
+  @pyqtSlot(bool)
+  def uiCompact(self, cmp):
+    for lay, stopt in self.layoutsOnStart.items():
+      if not sip.isdeleted(lay):
+        lay.setContentsMargins(QMargins() if cmp else stopt[0])
+        lay.setSpacing(0 if cmp else stopt[1])
+    QTimer.singleShot(0, self.updateSizes)
 
 
   @pyqtSlot(dict, dict)
   def onBearMove(self, orig, dest):
-    for slt in self.bears.values():
-      if slt is not self.sender() and slt.inFamily():
+    for slt in Slits.family:
+      if slt is not self.sender() and slt.isActive():
         sorig = slt.posRBV()
         sdest = {rol : sorig[rol] + dest[rol] - orig[rol] for rol in MR}
         slt.onMoveOrder(sdest)
@@ -304,7 +309,7 @@ class MainWindow(QMainWindow):
     connected = True
     moving = False
     limit = False
-    for slt in self.bears.values():
+    for slt in Slits.family:
       connected &= slt.isConnected
       moving |= slt.isMoving
       limit |= slt.isOnLimit
@@ -347,49 +352,37 @@ class MainWindow(QMainWindow):
     return fileName
 
 
-
   @pyqtSlot()
   def onSave(self, fileName=None):
 
     fileName = self._fileSaveLoad(fileName, True)
     if not fileName:
       return
-
-    config = QSettings(fileName, QSettings.IniFormat)
-    if config is None or not config.isWritable():
-      QMessageBox.warning(self, '',
-        'Failed to open and/or save configuration to\n' + fileName)
+    
+    cfg = None
+    try:
+      cfg = open(fileName, 'w')
+    except: 
+      QMessageBox.warning(self, '', 'Failed to open file\n' + fileName)
       return
+    
+    cfg.write('#!/bin/bash\n\n')
 
-    config.setValue('distance', self.ui.distance.value())
-    config.setValue('tabbedui', self.ui.viewTab.isChecked())
+    addMot = lambda mot: cfg.write('caput %s %f\n' % (mot.getPv(), mot.getUserPosition()))
+    for slt in Slits.family:
+      if slt.isActive():
+        for mot in slt.motors.values():
+          addMot(mot)
+      if slt.baseMotor and slt.baseMotor not in slt.motors.values():
+        addMot(slt.baseMotor)
+    
+    cfg.write('\n')
+    cfg.write('echo %s\n' % ('UITAB' if self.ui.viewTab.isChecked() else 'UIALL'))
+    cfg.write('echo %s\n' % ('UICOMPACT' if self.ui.compact.isChecked() else 'UINORMAL'))
 
-    for nslt in self.slitNames:
-      slt = self.bears[nslt]
-      if slt.inFamily():
-        config.beginGroup(nslt)
-
-        def motcfg(mot):
-          return mot.getPv() + ' ' + str(mot.getUserPosition())
-
-        for rol, mot in slt.motors.items():
-          config.setValue('MR_' + rol.name, motcfg(mot))
-
-        if slt.baseMotor is not None and slt.baseMotor not in slt.motors.values():
-          config.setValue('MR_BS', motcfg(slt.baseMotor))
-
-        addMotors = slt.additionalMotors()
-        if len(addMotors):
-          config.beginWriteArray("additionalmotors", len(addMotors))
-          cnt = 0
-          for mot in addMotors:
-            config.setArrayIndex(cnt)
-            config.setValue('mot', motcfg(mot))
-            cnt += 1
-          config.endArray()
-
-        config.endGroup()
-
+    cfg.close()
+    os.chmod(fileName, os.stat(fileName).st_mode | stat.S_IEXEC)
+    
 
   @pyqtSlot()
   def onLoad(self, fileName=None):
@@ -397,61 +390,13 @@ class MainWindow(QMainWindow):
     fileName = self._fileSaveLoad(fileName, False)
     if not fileName:
       return
+    
+    self.ui.load.setEnabled(False)
+    ldout = subprocess.run(fileName, stdout=subprocess.PIPE, universal_newlines=True).stdout
+    self.ui.load.setEnabled(True)
 
-    config = QSettings(fileName, QSettings.IniFormat)
-    if config is None or config.status():
-      QMessageBox.warning(self, '',
-        'Failed to open and/or load configuration from\n' + fileName)
-      return
-
-    if config.value('distance') is not None:
-      self.ui.distance.setValue(float(config.value('distance')))
-    if config.value('tabbedui') is not None:
-      self.uiModeSwap(bool(config.value('tabbedui')))
-
-    cfgprobs = []
-    groups = config.childGroups()
-    for nslt in self.slitNames:
-      self.synbts[nslt].setChecked(nslt in groups)
-
-      if nslt in groups:
-        config.beginGroup(nslt)
-        slt = self.bears[nslt]
-        roles = (key[3:] for key in config.childKeys() if key.startswith('MR_'))
-
-        for roln in roles:
-          pv, pos = config.value('MR_'+roln).split(' ')
-          rol = MR[roln] if roln in MR.__members__ else None
-          prob = None
-
-          if not is_float(pos):
-            prob = 'Non-float target position \"' + pos +'\"'
-          elif roln == 'BS':
-            if pv != slt.baseMotor.getPv():
-              prob = 'PV mismatch ' + pv + ' != ' + slt.baseMotor.getPv()
-            else:
-              slt.baseMotor.goUserPosition(float(pos))
-              #print('PVGO' + pv + '->' + pos)
-          elif rol is None:
-            prob = 'MotoRole has no member ' + roln
-          elif rol not in slt.motors:
-            prob = 'Has no motor with role ' + roln
-          elif pv != slt.motors[rol].getPv():
-            prob = 'PV mismatch ' + pv + ' != ' + slt.motors[rol].getPv()
-          else:
-            slt.motors[rol].goUserPosition(float(pos))
-            # print('PVGO ' + pv + '->' + pos)
-          if prob:
-            cfgprobs.append(nslt + ': ' + prob)
-
-        config.endGroup()
-
-    if len(cfgprobs):
-      msgprobs = 'There were problems loading config file:\n'
-      for prob in cfgprobs:
-        msgprobs += prob + '\n'
-      QMessageBox.warning(self, '', msgprobs)
-
+    self.uiModeSwap('UITAB' in ldout)
+    self.uiCompact('UICOMPACT' in ldout)
 
 
 
