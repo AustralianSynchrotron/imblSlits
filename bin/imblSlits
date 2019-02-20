@@ -130,12 +130,17 @@ class MainWindow(QMainWindow):
     self.ui.baby .face.set('baby.png' , 'Baby bear')
     self.ui.panda.face.set('panda.png', 'HHLS'     )
 
+    self.ui.xrayFace.set('masha.png', 'Config')
+    self.ui.xrayFace.setMinimumSize(self.ui.panda.face.minimumSize())
+    self.ui.panda.visual.heightChanged.connect(self.ui.fakeSlitsVis.setMinimumHeight)      
+
     for slt in Slits.family:
       slt.willMoveNow.connect(self.onBearMove)
       slt.changedConnection.connect(self.onStatusChange)
       slt.changedMotion    .connect(self.onStatusChange)
       slt.changedLimits    .connect(self.onStatusChange)
       slt.knowTheFamily()
+      self.ui.xrayFace.labBut.toggled.connect(slt.face.labBut.setChecked)
 
     tab = self.ui.tabWidget.tabBar()
     tab.setExpanding(True)
@@ -145,11 +150,6 @@ class MainWindow(QMainWindow):
         slt.layFaceTab.layout().addWidget(slt.face)
         tab.setTabButton(itab, QTabBar.LeftSide, slt.layFaceTab)
     
-    self.ui.xrayFace.set('masha.png', 'Config')
-    self.ui.xrayFace.setMinimumSize(self.ui.panda.face.minimumSize())
-    self.ui.panda.visual.heightChanged.connect(
-      self.ui.fakeSlitsVis.setMinimumHeight)      
-
     self.showcfg = QPushButton(QtGui.QIcon(sharePath+'masha.png'), '', self)
     self.showcfg.clicked.connect(self.showConfig)
     self.ui.statusbar.addPermanentWidget(self.showcfg)

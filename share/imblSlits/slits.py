@@ -83,13 +83,8 @@ class Face(QWidget):
     self.labImg = QLabel(self)
     lyt.addWidget(self.labImg)
     self.labBut = None
-    if type(parent.parent()) is Slits:
-      self.labBut = self.QSCheckBox(self)
-      self.labBut.setChecked(True)
-    else:
-      self.labBut = QLabel(self)
-      self.labBut.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-      self.labBut.setAlignment(Qt.AlignCenter)
+    self.labBut = self.QSCheckBox(self)
+    self.labBut.setChecked(True)
     lyt.addWidget(self.labBut)
     self.dirtyHack.objectNameChanged.connect(
       lambda x: self.labBut.setMinimumWidth(int(x)))
