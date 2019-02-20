@@ -224,10 +224,7 @@ class MainWindow(QMainWindow):
       return
     for slt in Slits.family:
       if slt.isActive() and slt.baseMotor is not None:
-        if self.ui.driveAbs.isChecked():
-          slt.baseMotor.goUserPosition(0 if self.sender() is self.ui.goWhite else 20)
-        else:
-          slt.baseMotor.goRelative(-20 if self.sender() is self.ui.goWhite else 20)
+        slt.baseMotor.goUserPosition(0 if self.sender() is self.ui.goWhite else 20)
 
   
   @pyqtSlot()
