@@ -365,15 +365,19 @@ class MainWindow(QMainWindow):
 
     addMot = lambda mot: cfg.write('caput %s %f\n' % (mot.getPv(), mot.getUserPosition()))
     for slt in Slits.family:
-      if slt.isActive():
-        for mot in slt.motors.values():
-          addMot(mot)
+      preact = '' if slt.isActive() else '# '
+      for mot in slt.motors.values():
+        cfg.write(preact)
+        addMot(mot)
       if slt.baseMotor and slt.baseMotor not in slt.motors.values():
+        cfg.write(preact)
         addMot(slt.baseMotor)
     
     cfg.write('\n')
-    cfg.write('echo %s\n' % ('UITAB' if self.ui.viewTab.isChecked() else 'UIALL'))
-    cfg.write('echo %s\n' % ('UICOMPACT' if self.ui.compact.isChecked() else 'UINORMAL'))
+    cfg.write('if [ "$SLITSLOADCFG" == true ] ; then\n')  
+    cfg.write('  echo %s\n' % ('UITAB' if self.ui.viewTab.isChecked() else 'UIALL'))
+    cfg.write('  echo %s\n' % ('UICOMPACT' if self.ui.compact.isChecked() else 'UINORMAL'))
+    cfg.write('fi\n')
 
     cfg.close()
     os.chmod(fileName, os.stat(fileName).st_mode | stat.S_IEXEC)
@@ -386,6 +390,7 @@ class MainWindow(QMainWindow):
     if not fileName:
       return
     
+    os.environ["SLITSLOADCFG"] = "true"
     self.ui.load.setEnabled(False)
     ldout = subprocess.run(fileName, stdout=subprocess.PIPE, universal_newlines=True).stdout
     self.ui.load.setEnabled(True)
