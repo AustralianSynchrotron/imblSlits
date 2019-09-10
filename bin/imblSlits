@@ -170,7 +170,7 @@ class MainWindow(QMainWindow):
     self.ui.compact.toggled.connect(self.uiCompact)
     self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
     self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
-    self.uiModeSwap(True)
+    self.uiModeSwap(False)
 
     self.ui.save.clicked.connect(self.onSave)
     self.ui.load.clicked.connect(self.onLoad)

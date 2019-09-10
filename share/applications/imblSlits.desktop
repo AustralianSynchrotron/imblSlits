@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=IMBL Slits
+Exec=imblSlits
+Icon=imblSlitsIcon
+Terminal=false
+Categories=Science;X-IMBL;
+StartupNotify=true
