@@ -99,7 +99,7 @@
   <customwidget>
    <class>QMDoubleSpinBox</class>
    <extends>QDoubleSpinBox</extends>
-   <header location="global">qtpvwidgets.h</header>
+   <header location="global">pyqtpvwidgets.h</header>
    <slots>
     <signal>valueEdited(double)</signal>
     <signal>escaped()</signal>

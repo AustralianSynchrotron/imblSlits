@@ -430,7 +430,7 @@
   <customwidget>
    <class>QMDoubleSpinBox</class>
    <extends>QDoubleSpinBox</extends>
-   <header location="global">qtpvwidgets.h</header>
+   <header location="global">pyqtpvwidgets.h</header>
    <slots>
     <signal>valueEdited(double)</signal>
     <signal>escaped()</signal>
@@ -445,7 +445,7 @@
   <customwidget>
    <class>QMotorStack</class>
    <extends>QWidget</extends>
-   <header location="global">qmotorstack.h</header>
+   <header location="global">pyqmotorstack.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

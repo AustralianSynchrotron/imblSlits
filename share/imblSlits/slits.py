@@ -4,7 +4,7 @@ from PyQt5.QtGui import  QPen, QBrush, QColor
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from enum import Enum, auto
-from qcamotorgui import QCaMotorGUI
+from pyqcamotorgui import QCaMotorGUI
 
 filePath = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 
