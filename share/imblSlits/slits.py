@@ -84,7 +84,7 @@ class Face(QWidget):
     lyt.addWidget(self.labImg)
     self.labBut = None
     self.labBut = self.QSCheckBox(self)
-    self.labBut.setChecked(True)
+    self.labBut.setChecked(False)
     lyt.addWidget(self.labBut)
     self.dirtyHack.objectNameChanged.connect(
       lambda x: self.labBut.setMinimumWidth(int(x)))

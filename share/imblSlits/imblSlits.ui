@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>330</width>
-    <height>579</height>
+    <width>344</width>
+    <height>590</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -211,9 +211,9 @@
              <property name="text">
               <string>I&amp;n tabs</string>
              </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">viewMode</string>
+             </attribute>
             </widget>
            </item>
            <item>
@@ -221,6 +221,12 @@
              <property name="text">
               <string>A&amp;ll at once</string>
              </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <attribute name="buttonGroup">
+              <string notr="true">viewMode</string>
+             </attribute>
             </widget>
            </item>
            <item>
@@ -470,8 +476,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>330</width>
-     <height>44</height>
+     <width>344</width>
+     <height>45</height>
     </rect>
    </property>
   </widget>
@@ -493,4 +499,7 @@
  </customwidgets>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="viewMode"/>
+ </buttongroups>
 </ui>

@@ -6,151 +6,25 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>383</width>
-    <height>558</height>
+    <width>393</width>
+    <height>573</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="7" column="1">
-    <widget class="Driver" name="dBT" native="true"/>
-   </item>
-   <item row="0" column="0" colspan="3">
-    <widget class="SlitsVis" name="visual" native="true"/>
-   </item>
-   <item row="6" column="1">
-    <widget class="QPushButton" name="stop">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Stop</string>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="0" colspan="3">
-    <widget class="QPushButton" name="showStack">
-     <property name="text">
-      <string>Raw motor access</string>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="11" column="0" colspan="3">
-    <widget class="QMotorStack" name="stack" native="true"/>
-   </item>
-   <item row="8" column="0">
-    <widget class="QWidget" name="spacer" native="true">
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>20</width>
-          <height>40</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="Driver" name="dTP" native="true"/>
-   </item>
-   <item row="6" column="0">
-    <widget class="Driver" name="dLF" native="true"/>
-   </item>
-   <item row="3" column="1">
-    <widget class="Driver" name="dVS" native="true"/>
-   </item>
-   <item row="4" column="0" colspan="3">
-    <widget class="Line" name="line_8">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
+   <item row="1" column="1">
+    <widget class="Driver" name="dVP" native="true"/>
    </item>
    <item row="6" column="2">
     <widget class="Driver" name="dRT" native="true"/>
    </item>
-   <item row="1" column="1">
-    <widget class="Driver" name="dVP" native="true"/>
+   <item row="11" column="0" colspan="3">
+    <widget class="QMotorStack" name="stack" native="true"/>
    </item>
-   <item row="3" column="2">
-    <widget class="QLabel" name="sizeLabel">
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="positionLabel">
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="2">
-    <widget class="QWidget" name="layFaceFam" native="true">
-     <layout class="QVBoxLayout" name="layout_2">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="Face" name="face" native="true"/>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="Driver" name="dHP" native="true"/>
-   </item>
-   <item row="2" column="2">
-    <widget class="Driver" name="dHS" native="true"/>
-   </item>
-   <item row="3" column="0">
-    <widget class="QWidget" name="layFaceTab" native="true">
-     <layout class="QVBoxLayout" name="layout_1">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-     </layout>
-    </widget>
+   <item row="7" column="1">
+    <widget class="Driver" name="dBT" native="true"/>
    </item>
    <item row="5" column="0">
     <widget class="QLabel" name="linkW">
@@ -177,6 +51,9 @@
      </property>
     </widget>
    </item>
+   <item row="5" column="1">
+    <widget class="Driver" name="dTP" native="true"/>
+   </item>
    <item row="5" column="2">
     <widget class="QLabel" name="limitW">
      <property name="sizePolicy">
@@ -202,122 +79,15 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QWidget" name="stepWidget" native="true">
-     <layout class="QGridLayout" name="gridLayout_8">
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <item row="3" column="0">
-       <widget class="QToolButton" name="sd2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::ClickFocus</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: -2px</string>
-        </property>
-        <property name="text">
-         <string>/2</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QToolButton" name="sm2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::ClickFocus</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: -2px</string>
-        </property>
-        <property name="text">
-         <string>*2</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QToolButton" name="sd0">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::ClickFocus</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: -2px</string>
-        </property>
-        <property name="text">
-         <string>/10</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="2">
-       <widget class="QMDoubleSpinBox" name="step">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="maximum">
-         <double>100.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QToolButton" name="sm0">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::ClickFocus</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: -2px</string>
-        </property>
-        <property name="text">
-         <string>*10</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0" colspan="2">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Step</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+   <item row="3" column="2">
+    <widget class="QLabel" name="sizeLabel">
+     <property name="text">
+      <string/>
+     </property>
     </widget>
    </item>
    <item row="7" column="0">
-    <widget class="QWidget" name="" native="true">
+    <widget class="QWidget" name="widget" native="true">
      <property name="toolTip">
       <string>Moves these slits to match the selected item.</string>
      </property>
@@ -364,8 +134,78 @@
      </layout>
     </widget>
    </item>
+   <item row="3" column="1">
+    <widget class="Driver" name="dVS" native="true"/>
+   </item>
+   <item row="6" column="1">
+    <widget class="QPushButton" name="stop">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Stop</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="Driver" name="dHP" native="true"/>
+   </item>
+   <item row="1" column="2">
+    <widget class="QWidget" name="layFaceFam" native="true">
+     <layout class="QVBoxLayout" name="layout_2">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="Face" name="face" native="true"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="3">
+    <widget class="Line" name="line_8">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="3">
+    <widget class="SlitsVis" name="visual" native="true"/>
+   </item>
+   <item row="9" column="0" colspan="3">
+    <widget class="QPushButton" name="showStack">
+     <property name="text">
+      <string>Raw motor access</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="positionLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
    <item row="7" column="2">
-    <widget class="QWidget" name="" native="true">
+    <widget class="QWidget" name="widget" native="true">
      <property name="toolTip">
       <string>Applies the geometry of these slits to the selected item.</string>
      </property>
@@ -412,6 +252,166 @@
         </property>
         <property name="arrowType">
          <enum>Qt::DownArrow</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QWidget" name="spacer" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="Driver" name="dLF" native="true"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QWidget" name="layFaceTab" native="true">
+     <layout class="QVBoxLayout" name="layout_1">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="Driver" name="dHS" native="true"/>
+   </item>
+   <item row="2" column="1">
+    <widget class="QWidget" name="stepWidget" native="true">
+     <layout class="QGridLayout" name="gridLayout_8">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item row="1" column="0" colspan="2">
+       <widget class="QMDoubleSpinBox" name="step">
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QToolButton" name="sm2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: -2px</string>
+        </property>
+        <property name="text">
+         <string>*2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Step</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QToolButton" name="sd2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: -2px</string>
+        </property>
+        <property name="text">
+         <string>/2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QToolButton" name="sm0">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: -2px</string>
+        </property>
+        <property name="text">
+         <string>*10</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QToolButton" name="sd0">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::ClickFocus</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: -2px</string>
+        </property>
+        <property name="text">
+         <string>/10</string>
         </property>
        </widget>
       </item>

@@ -132,6 +132,7 @@ class MainWindow(QMainWindow):
 
     self.ui.xrayFace.set('masha.png', 'Config')
     self.ui.xrayFace.setMinimumSize(self.ui.panda.face.minimumSize())
+    self.ui.layXrayFaceTab.layout().addWidget(self.ui.xrayFace)
     self.ui.panda.visual.heightChanged.connect(self.ui.fakeSlitsVis.setMinimumHeight)      
 
     for slt in Slits.family:
@@ -149,11 +150,16 @@ class MainWindow(QMainWindow):
       if slt:
         slt.layFaceTab.layout().addWidget(slt.face)
         tab.setTabButton(itab, QTabBar.LeftSide, slt.layFaceTab)
-    
+
     self.showcfg = QPushButton(QtGui.QIcon(sharePath+'masha.png'), '', self)
     self.showcfg.clicked.connect(self.showConfig)
     self.ui.statusbar.addPermanentWidget(self.showcfg)
-    self.showConfig(False)
+    self.showConfig(True)    
+
+    self.ui.compact.toggled.connect(self.uiCompact)
+    self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
+    self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
+    self.uiModeSwap(False)
 
     self.stopall = QPushButton('Stop all', self)
     for slt in Slits.family:
@@ -166,11 +172,6 @@ class MainWindow(QMainWindow):
     self.ui.statusbar.addPermanentWidget(modeLabel)
     self.blMode.updated.connect(self.updateBase)
     QTimer.singleShot(0, self.updateBase)
-
-    self.ui.compact.toggled.connect(self.uiCompact)
-    self.ui.viewTab.clicked.connect(lambda: self.uiModeSwap(True))
-    self.ui.viewFam.clicked.connect(lambda: self.uiModeSwap(False))
-    self.uiModeSwap(False)
 
     self.ui.save.clicked.connect(self.onSave)
     self.ui.load.clicked.connect(self.onLoad)
@@ -195,7 +196,7 @@ class MainWindow(QMainWindow):
                              (MR.BT, 'SR08ID01SLM12:BOT'),
                              (MR.TP, 'SR08ID01SLM12:TOP')])
 
-    self.ui. mama.setDistance(31)
+    self.ui. mama.setDistance(25)
     self.ui. mama.setMotors({MR.VP : 'SR08ID01SLM21:Z',
                              MR.VS : 'SR08ID01SLM21:ZGAP',
                              MR.HP : 'SR08ID01SLM21:Y',
