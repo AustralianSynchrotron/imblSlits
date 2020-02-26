@@ -283,11 +283,13 @@ class MainWindow(QMainWindow):
 
   @pyqtSlot(bool)
   def uiCompact(self, cmp):
-    for lay, stopt in self.layoutsOnStart.items():
-      #if not sip.isdeleted(lay):
-        lay.setContentsMargins(QMargins() if cmp else stopt[0])
-        lay.setSpacing(0 if cmp else stopt[1])
-    QTimer.singleShot(0, self.updateSizes)
+## sip.isdeleted() is crashing the application complaining about the simplewrapper or something
+#    for lay, stopt in self.layoutsOnStart.items():
+#      if not sip.isdeleted(lay):
+#        lay.setContentsMargins(QMargins() if cmp else stopt[0])
+#        lay.setSpacing(0 if cmp else stopt[1])
+#    QTimer.singleShot(0, self.updateSizes)
+     pass
 
 
   @pyqtSlot(dict, dict)
