@@ -206,12 +206,11 @@ class MainWindow(QMainWindow):
     self.ui.papa.setDistance(136)
     self.ui.papa.setMotors(  {MR.VP : 'SR08ID01SLM03:ZCENTRE',
                               MR.VS : 'SR08ID01SLM03:ZGAP',
-                              MR.HP : 'SR08ID01SLM03:YCENTRE',
-                              MR.HS : 'SR08ID01SLM03:YGAP'},
+                              MR.LF : 'SR08ID01SLM03:LEFT',
+                              MR.RT : 'SR08ID01SLM03:RIGHT'},
                              'SR08ID01SLM03:ZCENTRE',
-                             [(MR.LF, 'SR08ID01SLM03:LEFT'),
-                              (MR.RT, 'SR08ID01SLM03:RIGHT'),
-                              'SR08ID01SLM03:ROTARYARM'])
+                             [(MR.HP, 'SR08ID01SLM03:YCENTRE'),
+                              (MR.HS, 'SR08ID01SLM03:YGAP')])
 
 
   @pyqtSlot()
